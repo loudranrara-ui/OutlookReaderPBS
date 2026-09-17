@@ -13,38 +13,38 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --radius: 0.25rem;
+  --background: #f4d6dc;
+  --foreground: #190304;
+  --card: #fff8f9;
+  --card-foreground: #190304;
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --primary: #720002;
+  --primary-foreground: #ffffff;
+  --secondary: #f4d6dc;
+  --secondary-foreground: #190304;
+  --muted: #f4d6dc;
+  --muted-foreground: #720002;
+  --accent: #db8291;
+  --accent-foreground: #190304;
+  --destructive: #ef233c;
+  --border: #190304;
+  --input: #190304;
+  --ring: #190304;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #190304;
+  --sidebar-primary: #720002;
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: #f4d6dc;
+  --sidebar-accent-foreground: #190304;
+  --sidebar-border: #190304;
+  --sidebar-ring: #190304;
 }
 
 body {
@@ -135,6 +135,8 @@ body {
 
   body {
     @apply bg-background text-foreground tracking-tight;
+    background-image: linear-gradient(90deg, rgb(25 3 4 / 0.04) 1px, transparent 1px), linear-gradient(rgb(25 3 4 / 0.04) 1px, transparent 1px);
+    background-size: 22px 22px;
   }
 }
 
@@ -167,19 +169,56 @@ body {
 }
 
 .user-brand-bg {
-  background:
-    radial-gradient(circle at top left, rgb(244 214 220 / 0.9), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(219 130 145 / 0.28), transparent 30rem),
-    linear-gradient(135deg, #fffafb 0%, #fff4f6 48%, #f4d6dc 100%);
+  background: #fff7c7;
+  background-image: linear-gradient(90deg, rgb(25 3 4 / 0.055) 1px, transparent 1px), linear-gradient(rgb(25 3 4 / 0.055) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 .user-glass-card {
-  background: rgb(255 255 255 / 0.72);
-  border-color: rgb(114 0 2 / 0.13);
-  box-shadow: 0 24px 80px rgb(114 0 2 / 0.10);
-  backdrop-filter: blur(18px);
+  background: #ffffff;
+  border: 3px solid #190304;
+  box-shadow: 8px 8px 0 #190304;
 }
 
 .user-berry-gradient {
-  background: linear-gradient(135deg, #720002 0%, #a32031 56%, #db8291 100%);
+  background: #720002;
+}
+
+.neo-card {
+  border: 3px solid #190304;
+  box-shadow: 8px 8px 0 #190304;
+}
+
+.neo-shadow {
+  box-shadow: 6px 6px 0 #190304;
+}
+
+.neo-shadow-sm {
+  box-shadow: 4px 4px 0 #190304;
+}
+
+.brand-neo-bg {
+  background:
+    radial-gradient(circle at 12% 14%, #ffffff 0 8rem, transparent 8.2rem),
+    radial-gradient(circle at 86% 18%, #db8291 0 9rem, transparent 9.2rem),
+    radial-gradient(circle at 70% 88%, #720002 0 10rem, transparent 10.2rem),
+    #f4d6dc;
+  background-attachment: fixed;
+}
+
+.brand-panel-pink {
+  background: #f4d6dc;
+}
+
+.brand-panel-rose {
+  background: #db8291;
+}
+
+.brand-panel-berry {
+  background: #720002;
+  color: #ffffff;
+}
+
+.brand-panel-cream {
+  background: #fff8f9;
 }

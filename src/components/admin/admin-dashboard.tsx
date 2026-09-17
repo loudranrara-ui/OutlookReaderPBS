@@ -53,7 +53,7 @@ export function AdminMissingConfig() {
 
 export function AdminLoginCard({ email, password, loading, onEmailChange, onPasswordChange, onSubmit }: AdminLoginCardProps) {
     return (
-        <div className="min-h-screen bg-muted/30 p-4 flex items-center justify-center">
+        <div className="brand-neo-bg min-h-screen p-4 flex items-center justify-center">
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader className="text-center">
                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -80,15 +80,15 @@ function adminNavClass({ isActive }: { isActive: boolean }) {
 
 function AdminSidebar() {
     return (
-        <aside className="hidden w-72 shrink-0 border-r bg-card/80 lg:flex lg:flex-col">
-            <div className="border-b p-5">
-                <div className="flex items-center gap-3 rounded-2xl bg-primary/10 p-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <aside className="hidden w-72 shrink-0 border-r-3 border-foreground bg-[#F4D6DC] lg:flex lg:flex-col">
+            <div className="border-b-3 border-foreground p-5">
+                <div className="neo-card flex items-center gap-3 rounded-sm bg-white p-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-sm border-3 border-foreground bg-[#720002] text-white shadow-[3px_3px_0_#190304]">
                         <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div>
-                        <p className="font-semibold leading-none">Admin Dashboard</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Outlook Reader</p>
+                        <p className="font-black leading-none text-[#720002]">Admin Dashboard</p>
+                        <p className="mt-1 text-xs font-bold text-[#720002]/70">Outlook Reader</p>
                     </div>
                 </div>
             </div>
@@ -99,18 +99,18 @@ function AdminSidebar() {
                 <NavLink to="/admin/logs" className={adminNavClass}><Mail className="h-4 w-4" /> Log Email</NavLink>
                 <NavLink to="/admin/settings" className={adminNavClass}><Settings className="h-4 w-4" /> Pengaturan</NavLink>
             </nav>
-            <div className="border-t p-4 text-xs text-muted-foreground">Data akun tetap terenkripsi di Supabase.</div>
+            <div className="border-t-3 border-foreground bg-[#DB8291] p-4 text-xs font-black text-[#190304]">Data akun tetap terenkripsi di Supabase.</div>
         </aside>
     )
 }
 
 function AdminTopbar({ loading, onRefresh, onSignOut }: Pick<AdminDashboardProps, "loading" | "onRefresh" | "onSignOut">) {
     return (
-        <header className="sticky top-0 z-20 border-b bg-background/90 px-4 py-3 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-20 border-b-3 border-foreground bg-[#FFF8F9] px-4 py-3 md:px-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Admin Panel</p>
-                    <h1 className="text-xl font-bold tracking-tight md:text-2xl">Kelola Akun & Log Email</h1>
+                    <p className="text-xs font-black uppercase tracking-wider text-[#720002]">Admin Panel</p>
+                    <h1 className="text-xl font-black tracking-tight md:text-2xl">Kelola Akun & Log Email</h1>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={onRefresh} disabled={loading}>
@@ -133,13 +133,13 @@ function AdminTopbar({ loading, onRefresh, onSignOut }: Pick<AdminDashboardProps
 
 export function AdminShell({ loading, onRefresh, onSignOut, children }: Pick<AdminDashboardProps, "loading" | "onRefresh" | "onSignOut"> & { children: React.ReactNode }) {
     return (
-        <div className="min-h-screen bg-muted/20 text-foreground">
+        <div className="brand-neo-bg min-h-screen text-foreground">
             <div className="flex min-h-screen">
                 <AdminSidebar />
                 <div className="flex min-w-0 flex-1 flex-col">
                     <AdminTopbar loading={loading} onRefresh={onRefresh} onSignOut={onSignOut} />
                     <main className="flex-1 space-y-6 p-4 md:p-6">{children}</main>
-                    <footer className="border-t px-4 py-3 text-xs text-muted-foreground md:px-6">
+                    <footer className="border-t-3 border-foreground bg-[#720002] px-4 py-3 text-xs font-black text-white md:px-6">
                         Admin dashboard berjalan di Vercel dan terhubung ke Supabase Auth, Database, dan RLS.
                     </footer>
                 </div>
@@ -151,15 +151,15 @@ export function AdminShell({ loading, onRefresh, onSignOut, children }: Pick<Adm
 export function StatCards({ accounts, logs, selectedAccountId, onFilterChange }: Pick<AdminDashboardProps, "accounts" | "logs" | "selectedAccountId" | "onFilterChange">) {
     return (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Card>
+            <Card className="brand-panel-cream">
                 <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4" /> Total Akun</CardTitle></CardHeader>
                 <CardContent className="text-3xl font-bold">{accounts.length}</CardContent>
             </Card>
-            <Card>
+            <Card className="brand-panel-pink">
                 <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Mail className="h-4 w-4" /> Log Ditampilkan</CardTitle></CardHeader>
                 <CardContent className="text-3xl font-bold">{logs.length}</CardContent>
             </Card>
-            <Card>
+            <Card className="brand-panel-rose">
                 <CardHeader className="pb-3"><CardTitle className="text-base">Filter Log</CardTitle></CardHeader>
                 <CardContent>
                     <select className="w-full rounded-lg border bg-background px-3 py-2 text-sm" value={selectedAccountId} onChange={(event) => onFilterChange(event.target.value)}>
@@ -175,7 +175,7 @@ export function StatCards({ accounts, logs, selectedAccountId, onFilterChange }:
 export function SettingsPanel({ vaultEnabled, loading, onToggleVault }: Pick<AdminDashboardProps, "vaultEnabled" | "loading" | "onToggleVault">) {
     return (
         <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
+            <Card className="brand-panel-cream">
                 <CardHeader>
                     <CardTitle>Pengaturan Tampilan User</CardTitle>
                     <CardDescription>Atur apakah pengguna boleh melihat menu Kelola Akun di halaman utama.</CardDescription>
@@ -191,7 +191,7 @@ export function SettingsPanel({ vaultEnabled, loading, onToggleVault }: Pick<Adm
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="brand-panel-pink">
                 <CardHeader>
                     <CardTitle>Flow Aktif</CardTitle>
                     <CardDescription>Ringkasan cara aplikasi utama bekerja setelah refactor admin.</CardDescription>
@@ -209,7 +209,7 @@ export function SettingsPanel({ vaultEnabled, loading, onToggleVault }: Pick<Adm
 
 export function AddAccountPanel({ loading, newAccountCredential, onAddAccount, onCredentialChange }: Pick<AdminDashboardProps, "loading" | "newAccountCredential" | "newAccountKey" | "onAddAccount" | "onCredentialChange" | "onKeyChange">) {
     return (
-        <Card id="add-account">
+        <Card id="add-account" className="brand-panel-cream">
             <CardHeader>
                 <CardTitle>Tambah Akun Outlook</CardTitle>
                 <CardDescription>Akun ditambahkan oleh admin dan terenkripsi memakai kunci admin dari environment.</CardDescription>
@@ -227,7 +227,7 @@ export function AddAccountPanel({ loading, newAccountCredential, onAddAccount, o
 
 export function AccountListPanel({ accounts, selectedAccountId, onFilterChange, onClearFilter, onDeleteAccount }: Pick<AdminDashboardProps, "accounts" | "selectedAccountId" | "onFilterChange" | "onClearFilter" | "onDeleteAccount">) {
     return (
-        <Card id="accounts" className="overflow-hidden">
+        <Card id="accounts" className="brand-panel-cream overflow-hidden">
             <CardHeader>
                 <div className="flex items-center justify-between gap-3">
                     <div>
@@ -252,12 +252,12 @@ export function AccountListPanel({ accounts, selectedAccountId, onFilterChange, 
                                 onFilterChange(account.id)
                             }
                         }}
-                        className={`w-full rounded-xl border p-3 text-left transition-colors ${selectedAccountId === account.id ? "border-primary bg-primary/5" : "hover:bg-muted/30"}`}
+                        className={`w-full rounded-sm border-3 border-foreground p-3 text-left shadow-[4px_4px_0_#190304] transition-colors ${selectedAccountId === account.id ? "bg-[#DB8291]" : "bg-white hover:bg-[#F4D6DC]"}`}
                     >
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold text-foreground hover:text-primary hover:underline">{account.email}</p>
-                                {account.is_admin_managed && <p className="mt-1 text-xs font-medium text-primary">Admin-managed</p>}
+                                {account.is_admin_managed && <p className="mt-1 text-xs font-black text-[#720002]">Admin-managed</p>}
                                 <p className="mt-1 truncate text-xs text-muted-foreground">Client ID: {account.client_id}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">Dibuat: {new Date(account.created_at_ms).toLocaleString()}</p>
                             </div>
@@ -284,7 +284,7 @@ export function LatestLogsPreview({ logs }: Pick<AdminDashboardProps, "logs">) {
     const latestLogs = logs.slice(0, 10)
 
     return (
-        <Card>
+        <Card className="brand-panel-pink">
             <CardHeader>
                 <CardTitle>10 Email Terbaru</CardTitle>
                 <CardDescription>Ringkasan email terbaru yang tercatat dari semua akun atau akun yang sedang difilter.</CardDescription>
@@ -293,14 +293,14 @@ export function LatestLogsPreview({ logs }: Pick<AdminDashboardProps, "logs">) {
                 {latestLogs.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Belum ada log email.</p>
                 ) : latestLogs.map((log) => (
-                    <div key={log.id} className="rounded-xl border p-3">
+                    <div key={log.id} className="rounded-sm border-3 border-foreground bg-white p-3 shadow-[4px_4px_0_#190304]">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold">{log.subject}</p>
                                 <p className="mt-1 truncate text-xs text-muted-foreground">{log.sender}</p>
                                 <p className="mt-1 truncate text-xs text-muted-foreground">{log.account_email}</p>
                             </div>
-                            <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${log.is_read ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>
+                            <span className={`shrink-0 rounded-sm border-2 border-foreground px-2 py-1 text-xs font-black ${log.is_read ? "bg-[#F4D6DC] text-[#190304]" : "bg-[#720002] text-white"}`}>
                                 {log.is_read ? "Dibaca" : "Baru"}
                             </span>
                         </div>
@@ -360,7 +360,7 @@ export function InboxLogTable({ logs, accounts, selectedAccountId, onFilterChang
 
     return (
         <>
-            <Card id="logs" className="overflow-hidden">
+            <Card id="logs" className="brand-panel-cream overflow-hidden">
                 <CardHeader>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
@@ -377,9 +377,9 @@ export function InboxLogTable({ logs, accounts, selectedAccountId, onFilterChang
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto rounded-xl border">
+                    <div className="overflow-x-auto rounded-sm border-3 border-foreground bg-white">
                         <table className="w-full min-w-[760px] text-sm">
-                            <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                            <thead className="bg-[#720002] text-left text-xs uppercase tracking-wider text-white">
                                 <tr>
                                     <th className="px-3 py-2">Akun</th>
                                     <th className="px-3 py-2">Pengirim</th>
@@ -394,7 +394,7 @@ export function InboxLogTable({ logs, accounts, selectedAccountId, onFilterChang
                                 ) : logs.map((log) => (
                                     <tr
                                         key={log.id}
-                                        className={`cursor-pointer align-top hover:bg-muted/40 ${selectedLog?.id === log.id ? "bg-primary/5" : ""}`}
+                                        className={`cursor-pointer align-top hover:bg-[#F4D6DC] ${selectedLog?.id === log.id ? "bg-[#DB8291]/70" : ""}`}
                                         onClick={() => {
                                             setSelectedLog(log)
                                             setMessage(null)
@@ -410,7 +410,7 @@ export function InboxLogTable({ logs, accounts, selectedAccountId, onFilterChang
                                             {log.preview && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{log.preview}</p>}
                                         </td>
                                         <td className="px-3 py-3 text-xs text-muted-foreground">{log.received_at ? new Date(log.received_at).toLocaleString() : "-"}</td>
-                                        <td className="px-3 py-3"><span className={`rounded-full px-2 py-1 text-xs font-medium ${log.is_read ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{log.is_read ? "Dibaca" : "Baru"}</span></td>
+                                        <td className="px-3 py-3"><span className={`rounded-sm border-2 border-foreground px-2 py-1 text-xs font-black ${log.is_read ? "bg-[#F4D6DC] text-[#190304]" : "bg-[#720002] text-white"}`}>{log.is_read ? "Dibaca" : "Baru"}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
