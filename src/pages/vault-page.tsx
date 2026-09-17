@@ -111,7 +111,7 @@ export function VaultManager() {
 
     if (!hasHydrated) {
         return (
-            <div className="flex min-h-[70vh] w-full items-center justify-center text-sm text-muted-foreground">
+            <div className="flex min-h-[70vh] w-full items-center justify-center text-sm text-[#720002]/60">
                 Menyiapkan akun...
             </div>
         )
@@ -121,19 +121,19 @@ export function VaultManager() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] w-full p-4 md:p-8 relative z-10 overflow-hidden">
                 {/* Decorative background effects */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] -z-10 opacity-70 pointer-events-none" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-secondary/20 rounded-full blur-[80px] -z-10 bg-blend-multiply opacity-50 pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#F4D6DC] rounded-full blur-[100px] -z-10 opacity-70 pointer-events-none" />
+                <div className="absolute top-1/3 right-1/4 w-[340px] h-[340px] bg-[#DB8291]/30 rounded-full blur-[90px] -z-10 pointer-events-none" />
 
-                <Card className="w-full max-w-sm border-white/10 dark:border-white/5 shadow-2xl bg-background/60 backdrop-blur-2xl overflow-hidden relative">
+                <Card className="user-glass-card w-full max-w-sm rounded-[2rem] overflow-hidden relative">
                     {/* Inner subtle glow line */}
-                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                    <div className="absolute inset-x-0 top-0 h-2 user-berry-gradient" />
 
                     <CardHeader className="text-center space-y-3 pb-6 pt-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-4 ring-1 ring-primary/20 shadow-inner">
-                            {hasVault ? <Shield className="w-8 h-8 text-primary drop-shadow-sm" /> : <KeyRound className="w-8 h-8 text-primary drop-shadow-sm" />}
+                        <div className="w-16 h-16 bg-[#F4D6DC] rounded-3xl flex items-center justify-center mx-auto mb-4 ring-1 ring-[#720002]/10 shadow-inner">
+                            {hasVault ? <Shield className="w-8 h-8 text-[#720002] drop-shadow-sm" /> : <KeyRound className="w-8 h-8 text-[#720002] drop-shadow-sm" />}
                         </div>
-                        <CardTitle className="text-2xl font-bold tracking-tight">{hasVault ? "Buka Kunci Akun" : "Buat Kunci Keamanan"}</CardTitle>
-                        <CardDescription className="text-sm font-medium opacity-80 leading-relaxed px-2">
+                        <CardTitle className="text-2xl font-black tracking-tight text-[#720002]">{hasVault ? "Buka Kunci Akun" : "Buat Kunci Keamanan"}</CardTitle>
+                        <CardDescription className="text-sm font-medium text-[#720002]/65 leading-relaxed px-2">
                             {hasVault
                                 ? "Masukkan kunci keamanan untuk membuka daftar akun email Anda."
                                 : "Buat kunci yang mudah Anda ingat. Kunci ini dipakai untuk mengamankan akun di browser ini."}
@@ -146,7 +146,7 @@ export function VaultManager() {
                                 placeholder="Kunci keamanan"
                                 value={passphrase}
                                 onChange={(e) => setPassphrase(e.target.value)}
-                                className="bg-background/40 border-border/50 h-14 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-muted-foreground/40 shadow-inner transition-all focus:bg-background/80 focus:ring-1 focus:border-primary/50 rounded-xl"
+                                className="bg-white/70 border-[#720002]/15 h-14 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-[#720002]/35 shadow-inner transition-all focus:bg-white focus:ring-2 focus:ring-[#DB8291]/30 rounded-2xl text-[#720002]"
                                 autoFocus
                             />
                             {/* subtle focus ring effect underneath standard input */}
@@ -172,7 +172,7 @@ export function VaultManager() {
                         )}
                         <Button
                             type="submit"
-                            className="w-full h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-primary/25 transition-all duration-300"
+                            className="user-berry-gradient w-full h-12 text-base font-bold rounded-2xl text-white shadow-lg shadow-[#720002]/20 hover:opacity-95 transition-all duration-300"
                             disabled={loading || !passphrase}
                         >
                             {loading ? "Memproses..." : (hasVault ? <><Unlock className="w-5 h-5 mr-2" /> Buka Akun</> : <><KeyRound className="w-5 h-5 mr-2" /> Buat Kunci</>)}
@@ -215,8 +215,8 @@ export function VaultManager() {
     }
 
     return (
-        <div className="w-full h-full p-4 md:p-8 overflow-y-auto bg-background/50 relative z-10 hidden-scrollbar">
-            <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-primary/5 to-transparent -z-10 pointer-events-none" />
+        <div className="w-full h-full p-4 md:p-8 overflow-y-auto relative z-10 hidden-scrollbar">
+            <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-[#F4D6DC]/70 to-transparent -z-10 pointer-events-none" />
 
             <div className="max-w-3xl mx-auto space-y-8">
                 {/* Header Section */}
@@ -226,8 +226,8 @@ export function VaultManager() {
                             <Shield className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Kelola Akun</h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">Tambah, pilih, salin, atau hapus akun email dari browser ini.</p>
+                            <h1 className="text-2xl font-black tracking-tight text-[#720002]">Kelola Akun</h1>
+                            <p className="text-sm text-[#720002]/60 mt-0.5">Tambah, pilih, salin, atau hapus akun email dari browser ini.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">

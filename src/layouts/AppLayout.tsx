@@ -34,25 +34,25 @@ export function AppLayout() {
 
     return (
         <SidebarProvider>
-            <div className="flex min-h-screen w-full bg-background relative overflow-hidden">
+            <div className="user-shell user-brand-bg flex min-h-screen w-full relative overflow-hidden text-[#2a0709]">
                 {/* Desktop Sidebar */}
-                <Sidebar className="hidden md:flex border-r border-border bg-card/95">
+                <Sidebar className="hidden md:flex border-r border-[#720002]/10 bg-white/70 backdrop-blur-2xl">
                     <SidebarHeader className="p-4 flex flex-col gap-4">
-                        <div className="flex items-center gap-3 rounded-2xl bg-primary/10 p-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                        <div className="user-glass-card flex items-center gap-3 rounded-3xl p-3">
+                            <div className="user-berry-gradient flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-lg shadow-[#720002]/20">
                                 <Mail className="w-5 h-5" />
                             </div>
                             <div className="min-w-0">
-                                <span className="block font-semibold text-base leading-none">Pembaca Email</span>
-                                <span className="mt-1 block text-xs text-muted-foreground">Outlook & Hotmail</span>
+                                <span className="block font-bold text-base leading-none text-[#720002]">Pembaca Email</span>
+                                <span className="mt-1 block text-xs text-[#720002]/60">Outlook & Hotmail</span>
                             </div>
                         </div>
 
                         {accounts.length > 0 && (
-                            <div className="bg-background p-3 rounded-xl border text-sm flex flex-col gap-2 shadow-sm">
-                                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Akun yang dibuka</span>
+                            <div className="user-glass-card p-3 rounded-2xl text-sm flex flex-col gap-2">
+                                <span className="text-[10px] text-[#720002]/60 font-bold uppercase tracking-wider">Akun yang dibuka</span>
                                 <select
-                                    className="w-full rounded-lg border border-border/70 bg-muted/50 px-2 py-2 font-medium truncate focus:ring-2 focus:ring-primary/20 cursor-pointer text-sm outline-none"
+                                    className="w-full rounded-xl border border-[#720002]/15 bg-white/70 px-2 py-2 font-semibold truncate focus:ring-2 focus:ring-[#DB8291]/40 cursor-pointer text-sm outline-none text-[#720002]"
                                     value={activeAccountId || ""}
                                     onChange={(e) => setActiveAccount(e.target.value)}
                                 >
@@ -85,23 +85,23 @@ export function AppLayout() {
                             )}
                         </SidebarMenu>
                     </SidebarContent>
-                    <SidebarFooter className="p-4 flex flex-row justify-between items-center bg-muted/20 border-t border-border mt-auto gap-2">
-                        <span className="text-xs text-muted-foreground">Data tersimpan lokal</span>
+                    <SidebarFooter className="p-4 flex flex-row justify-between items-center bg-[#F4D6DC]/30 border-t border-[#720002]/10 mt-auto gap-2">
+                        <span className="text-xs font-medium text-[#720002]/60">Data terenkripsi</span>
                         <ModeToggle />
                     </SidebarFooter>
                 </Sidebar>
 
                 {/* Main Content Area */}
-                <div className="flex flex-col flex-1 min-w-0 bg-background h-screen overflow-hidden relative">
-                    <header className="md:hidden border-b border-border bg-card shrink-0">
+                <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden relative">
+                    <header className="md:hidden border-b border-[#720002]/10 bg-white/75 backdrop-blur-2xl shrink-0">
                         <div className="flex items-center justify-between p-4 pb-3">
                             <div className="flex items-center gap-2 min-w-0">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shrink-0">
+                                <div className="user-berry-gradient flex h-10 w-10 items-center justify-center rounded-2xl text-white shrink-0 shadow-lg shadow-[#720002]/20">
                                     <Mail className="w-4 h-4" />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold leading-none">Pembaca Email</span>
-                                    <span className="text-[10px] text-muted-foreground mt-1 truncate max-w-[180px]">
+                                    <span className="font-bold leading-none text-[#720002]">Pembaca Email</span>
+                                    <span className="text-[10px] text-[#720002]/60 mt-1 truncate max-w-[180px]">
                                         {accounts.length > 1 ? `${accounts.length} akun tersedia` : activeAccount?.email || "Belum ada akun"}
                                     </span>
                                 </div>
@@ -113,11 +113,11 @@ export function AppLayout() {
 
                         {accounts.length > 1 && (
                             <div className="px-4 pb-3">
-                                <label htmlFor="mobile-account-switcher" className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pilih akun</label>
+                                <label htmlFor="mobile-account-switcher" className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#720002]/60">Pilih akun</label>
                                 <div className="relative">
                                     <select
                                         id="mobile-account-switcher"
-                                        className="w-full appearance-none rounded-xl border border-border/70 bg-background/80 px-3 py-3 pr-10 text-sm font-semibold shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                        className="w-full appearance-none rounded-2xl border border-[#720002]/15 bg-white/80 px-3 py-3 pr-10 text-sm font-bold shadow-sm outline-none transition-colors focus:border-[#DB8291] focus:ring-2 focus:ring-[#DB8291]/30 text-[#720002]"
                                         value={activeAccountId || ""}
                                         onChange={(e) => setActiveAccount(e.target.value)}
                                     >
@@ -132,9 +132,9 @@ export function AppLayout() {
 
                         {accounts.length === 1 && activeAccount && (
                             <div className="px-4 pb-3">
-                                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Akun aktif</span>
+                                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#720002]/60">Akun aktif</span>
                                 <div
-                                    className="rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-sm font-medium truncate text-foreground"
+                                    className="rounded-2xl border border-[#720002]/15 bg-white/75 px-3 py-2 text-sm font-bold truncate text-[#720002]"
                                     title={activeAccount.email}
                                 >
                                     {activeAccount.email}
@@ -154,13 +154,13 @@ export function AppLayout() {
                     </main>
 
                     {/* Mobile Bottom Nav */}
-                    <nav className="md:hidden flex border-t border-border bg-card pb-safe shrink-0">
-                        <Link to="/inbox" className={`flex-1 flex flex-col items-center justify-center py-3 ${isInbox ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground'}`}>
+                    <nav className="md:hidden flex border-t border-[#720002]/10 bg-white/80 backdrop-blur-2xl pb-safe shrink-0">
+                        <Link to="/inbox" className={`flex-1 flex flex-col items-center justify-center py-3 ${isInbox ? 'text-[#720002] bg-[#F4D6DC]/70' : 'text-[#720002]/55 hover:text-[#720002]'}`}>
                             <Mail className="w-5 h-5 mb-1" />
                             <span className="text-[10px] uppercase font-medium">Email</span>
                         </Link>
                         {vaultEnabled && (
-                            <Link to="/vault" className={`flex-1 flex flex-col items-center justify-center py-3 ${isVault ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground'}`}>
+                            <Link to="/vault" className={`flex-1 flex flex-col items-center justify-center py-3 ${isVault ? 'text-[#720002] bg-[#F4D6DC]/70' : 'text-[#720002]/55 hover:text-[#720002]'}`}>
                                 <Shield className="w-5 h-5 mb-1" />
                                 <span className="text-[10px] uppercase font-medium">Akun</span>
                             </Link>

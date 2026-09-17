@@ -42,8 +42,8 @@ export function MessageDetailPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col h-full bg-background w-full">
-                <header className="px-6 py-4 border-b border-border/50 flex items-center gap-4 h-16 shrink-0 bg-background/50 backdrop-blur-md">
+            <div className="flex flex-col h-full w-full bg-white/55 backdrop-blur-xl">
+                <header className="px-6 py-4 border-b border-[#720002]/10 flex items-center gap-4 h-16 shrink-0 bg-white/55 backdrop-blur-md">
                     <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="lg:hidden"><ArrowLeft className="w-5 h-5" /></Button>
                     <Skeleton className="w-1/2 max-w-[300px] h-6" />
                 </header>
@@ -63,8 +63,8 @@ export function MessageDetailPage() {
 
     if (error || !message) {
         return (
-            <div className="flex flex-col h-full bg-background p-6 items-center justify-center text-center w-full">
-                <div className="p-6 rounded-xl border border-destructive/20 bg-destructive/5 text-destructive max-w-md w-full">
+            <div className="flex flex-col h-full p-6 items-center justify-center text-center w-full">
+                <div className="user-glass-card p-6 rounded-3xl text-[#720002] max-w-md w-full">
                     <h3 className="font-semibold mb-2">Email tidak bisa dibuka</h3>
                     <p className="text-sm opacity-90 mb-6">{error || "Email tidak ditemukan"}</p>
                     <Button variant="outline" onClick={() => navigate(-1)} className="w-full"><ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke Email Masuk</Button>
@@ -83,46 +83,46 @@ export function MessageDetailPage() {
     const initials = message.from.substring(0, 2).toUpperCase()
 
     return (
-        <div className="flex flex-col h-full bg-background w-full shadow-[-8px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
+        <div className="flex flex-col h-full w-full z-20">
             {/* Mobile-only back header */}
-            <div className="lg:hidden flex items-center sticky top-0 z-20 p-2 border-b border-border/50 bg-background/80 backdrop-blur-xl shrink-0 h-14">
-                <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 gap-1 text-muted-foreground hover:text-foreground">
+            <div className="lg:hidden flex items-center sticky top-0 z-20 p-2 border-b border-[#720002]/10 bg-white/75 backdrop-blur-xl shrink-0 h-14">
+                <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 gap-1 text-[#720002]/70 hover:text-[#720002]">
                     <ArrowLeft className="w-4 h-4" /> Kembali
                 </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar relative w-full h-full bg-background/50">
+            <div className="flex-1 overflow-y-auto no-scrollbar relative w-full h-full bg-white/35">
                 <div className="max-w-4xl mx-auto w-full">
                     {/* Header Area */}
-                    <div className="px-6 py-8 md:px-10 md:py-10 border-b border-border/30">
-                        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight text-foreground mb-6">
+                    <div className="px-6 py-8 md:px-10 md:py-10 border-b border-[#720002]/10 bg-white/45 backdrop-blur-xl">
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight leading-tight text-[#720002] mb-6">
                             {message.subject}
                         </h1>
 
                         <div className="flex items-start sm:items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-semibold text-lg shrink-0">
+                            <div className="user-berry-gradient w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-lg shadow-[#720002]/20">
                                 {initials}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
-                                    <span className="truncate text-base font-semibold text-foreground">
+                                    <span className="truncate text-base font-bold text-[#2a0709]">
                                         {message.from}
                                     </span>
                                 </div>
                                 {message.toRecipients.length > 0 && (
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                    <span className="font-medium text-foreground/70">Kepada:</span>
+                                    <div className="text-xs text-[#720002]/55 flex items-center gap-1.5 mt-0.5">
+                                    <span className="font-bold text-[#720002]/75">Kepada:</span>
                                         <span className="truncate">{message.toRecipients.join(", ")}</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* View Mode Toggle */}
-                            <div className="flex bg-muted/40 p-1 rounded-lg shrink-0 self-start sm:self-center ml-auto">
+                            <div className="flex bg-[#F4D6DC]/70 p-1 rounded-2xl shrink-0 self-start sm:self-center ml-auto ring-1 ring-[#720002]/10">
                                 <Button
                                     variant={viewMode === "html" ? "secondary" : "ghost"}
                                     size="sm"
-                                    className="h-7 text-xs px-3 shadow-none"
+                                    className={`h-8 rounded-xl text-xs px-3 shadow-none ${viewMode === "html" ? "bg-white text-[#720002]" : "text-[#720002]/65 hover:text-[#720002]"}`}
                                     onClick={() => setViewMode("html")}
                                 >
                                     Tampilan biasa
@@ -130,7 +130,7 @@ export function MessageDetailPage() {
                                 <Button
                                     variant={viewMode === "source" ? "secondary" : "ghost"}
                                     size="sm"
-                                    className="h-7 text-xs px-3 shadow-none"
+                                    className={`h-8 rounded-xl text-xs px-3 shadow-none ${viewMode === "source" ? "bg-white text-[#720002]" : "text-[#720002]/65 hover:text-[#720002]"}`}
                                     onClick={() => setViewMode("source")}
                                 >
                                     Teks asli
@@ -142,7 +142,7 @@ export function MessageDetailPage() {
                     {/* Body content */}
                     <div className="px-6 py-8 md:px-10 pb-20">
                         {viewMode === "html" ? (
-                            <div className="bg-white text-gray-900 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="bg-white text-gray-900 rounded-3xl shadow-xl shadow-[#720002]/10 border border-[#720002]/10 overflow-hidden">
                                 <div
                                     className="prose prose-sm md:prose-base max-w-none p-4 sm:p-6 sm:px-8
                                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
@@ -152,7 +152,7 @@ export function MessageDetailPage() {
                                 />
                             </div>
                         ) : (
-                            <div className="bg-muted/30 p-4 rounded-xl border border-border/50 overflow-x-auto text-xs font-mono whitespace-pre-wrap break-all text-muted-foreground">
+                            <div className="bg-white/70 p-4 rounded-3xl border border-[#720002]/10 overflow-x-auto text-xs font-mono whitespace-pre-wrap break-all text-[#720002]/70">
                                 {message.bodyHtmlRaw}
                             </div>
                         )}
