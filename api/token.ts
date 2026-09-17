@@ -1,21 +1,25 @@
-export default async function handler(req: Request) {
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
     if (req.method === 'OPTIONS') {
-        return new Response(null, {
-            status: 200,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            }
-        });
+        res.status(200).end()
+        return
     }
 
     if (req.method !== 'POST') {
-        return new Response('Method not allowed', { status: 405 });
+        res.status(405).send('Method not allowed')
+        return
     }
 
     try {
-        const rawBody = await req.text();
+        const rawBody = typeof req.body === 'string'
+            ? req.body
+            : new URLSearchParams(req.body as Record<string, string>).toString()
+
         const tokenResponse = await fetch('https://login.live.com/oauth20_token.srf', {
             method: 'POST',
             headers: {
@@ -23,27 +27,12 @@ export default async function handler(req: Request) {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
             },
             body: rawBody,
-        });
+        })
 
-        const data = await tokenResponse.json();
-
-        return new Response(JSON.stringify(data), {
-            status: tokenResponse.status,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            }
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ error: 'Proxy failed to reach Live OAuth' }), {
-            status: 502,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
+        const data = await tokenResponse.json()
+        res.status(tokenResponse.status).json(data)
+    } catch {
+        res.status(502).json({ error: 'Proxy failed to reach Live OAuth' })
     }
 }
 

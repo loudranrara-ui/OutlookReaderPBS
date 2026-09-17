@@ -50,8 +50,8 @@ interface GraphMessage {
     }
 }
 
-const USE_PROXY = import.meta.env.VITE_USE_OAUTH_PROXY === "true" || (import.meta.env.DEV && import.meta.env.VITE_USE_OAUTH_PROXY !== "false")
-const LIVE_TOKEN_URL = USE_PROXY ? "/api/token" : (import.meta.env.VITE_TOKEN_URL || "https://login.live.com/oauth20_token.srf")
+const USE_DIRECT_OAUTH = import.meta.env.VITE_USE_OAUTH_PROXY === "false"
+const LIVE_TOKEN_URL = USE_DIRECT_OAUTH ? "https://login.live.com/oauth20_token.srf" : (import.meta.env.VITE_TOKEN_URL || "/api/token")
 
 /**
  * Exchanges the refresh token for a new access token using the Live SDK OAuth2 endpoint.
