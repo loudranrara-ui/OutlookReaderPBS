@@ -10,9 +10,14 @@ import {
 import { toast } from "sonner"
 let globalRefreshPromise: Promise<string | null> | null = null
 
+interface SessionToken {
+    accountId: string
+    accessToken: string
+}
+
 export function useGraph() {
     const { activeAccountId, decryptedAccounts } = useVaultStore()
-    const [activeAccessToken, setActiveAccessToken] = useState<string | null>(null)
+    const [activeAccessToken, setActiveAccessToken] = useState<SessionToken | null>(null)
 
     // Retrieves the valid access token, refreshing if necessary
     const getValidToken = useCallback(async (forceRefresh = false): Promise<string | null> => {
@@ -21,11 +26,13 @@ export function useGraph() {
         if (!account) return null
 
         // If we already have a session token, return it (optimistic path)
-        if (!forceRefresh && activeAccessToken) return activeAccessToken
+        if (!forceRefresh && activeAccessToken?.accountId === activeAccountId) {
+            return activeAccessToken.accessToken
+        }
 
         if (globalRefreshPromise) {
             const token = await globalRefreshPromise
-            if (token) setActiveAccessToken(token)
+            if (token) setActiveAccessToken({ accountId: activeAccountId, accessToken: token })
             return token
         }
 
@@ -47,7 +54,7 @@ export function useGraph() {
         globalRefreshPromise = null
 
         if (token) {
-            setActiveAccessToken(token)
+            setActiveAccessToken({ accountId: activeAccountId, accessToken: token })
         } else {
             toast.error(exchangeError || "Session expired. Please check account credentials.")
         }

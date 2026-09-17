@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useGraph } from "@/hooks/useGraph"
+import { useVaultStore } from "@/store/vaultStore"
 import type { MessageDetail } from "@/lib/graph"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ import DOMPurify from "dompurify"
 export function MessageDetailPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const activeAccountId = useVaultStore((state) => state.activeAccountId)
     const { getMessageDetail } = useGraph()
     const [message, setMessage] = useState<MessageDetail | null>(null)
     const [loading, setLoading] = useState(true)
@@ -23,6 +25,7 @@ export function MessageDetailPage() {
         const load = async () => {
             setLoading(true)
             setError(null)
+            setMessage(null)
             try {
                 const msg = await getMessageDetail(id)
                 if (isMounted) setMessage(msg)
@@ -35,7 +38,7 @@ export function MessageDetailPage() {
         load()
 
         return () => { isMounted = false }
-    }, [id, getMessageDetail])
+    }, [id, activeAccountId, getMessageDetail])
 
     if (loading) {
         return (
@@ -62,9 +65,9 @@ export function MessageDetailPage() {
         return (
             <div className="flex flex-col h-full bg-background p-6 items-center justify-center text-center w-full">
                 <div className="p-6 rounded-xl border border-destructive/20 bg-destructive/5 text-destructive max-w-md w-full">
-                    <h3 className="font-semibold mb-2">Message Unavailable</h3>
-                    <p className="text-sm opacity-90 mb-6">{error || "Message not found"}</p>
-                    <Button variant="outline" onClick={() => navigate(-1)} className="w-full"><ArrowLeft className="w-4 h-4 mr-2" /> Return to Inbox</Button>
+                    <h3 className="font-semibold mb-2">Email tidak bisa dibuka</h3>
+                    <p className="text-sm opacity-90 mb-6">{error || "Email tidak ditemukan"}</p>
+                    <Button variant="outline" onClick={() => navigate(-1)} className="w-full"><ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke Email Masuk</Button>
                 </div>
             </div>
         )
@@ -84,7 +87,7 @@ export function MessageDetailPage() {
             {/* Mobile-only back header */}
             <div className="lg:hidden flex items-center sticky top-0 z-20 p-2 border-b border-border/50 bg-background/80 backdrop-blur-xl shrink-0 h-14">
                 <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 gap-1 text-muted-foreground hover:text-foreground">
-                    <ArrowLeft className="w-4 h-4" /> Back to Inbox
+                    <ArrowLeft className="w-4 h-4" /> Kembali
                 </Button>
             </div>
 
@@ -108,7 +111,7 @@ export function MessageDetailPage() {
                                 </div>
                                 {message.toRecipients.length > 0 && (
                                     <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                        <span className="font-medium text-foreground/70">To:</span>
+                                    <span className="font-medium text-foreground/70">Kepada:</span>
                                         <span className="truncate">{message.toRecipients.join(", ")}</span>
                                     </div>
                                 )}
@@ -122,7 +125,7 @@ export function MessageDetailPage() {
                                     className="h-7 text-xs px-3 shadow-none"
                                     onClick={() => setViewMode("html")}
                                 >
-                                    Rich Text
+                                    Tampilan biasa
                                 </Button>
                                 <Button
                                     variant={viewMode === "source" ? "secondary" : "ghost"}
@@ -130,7 +133,7 @@ export function MessageDetailPage() {
                                     className="h-7 text-xs px-3 shadow-none"
                                     onClick={() => setViewMode("source")}
                                 >
-                                    Raw Source
+                                    Teks asli
                                 </Button>
                             </div>
                         </div>

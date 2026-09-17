@@ -47,6 +47,7 @@ export function InboxPage() {
 
     useEffect(() => {
         if (!isLocked && hasActiveAccount) {
+            setData(null)
             loadInbox()
         } else {
             setData(null)
@@ -67,13 +68,14 @@ export function InboxPage() {
                 <header className="flex flex-col p-4 border-b border-border/50 bg-background/50 backdrop-blur-md sticky top-0 z-10 shrink-0 gap-3">
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <h1 className="text-lg font-bold tracking-tight leading-none">Inbox</h1>
+                            <h1 className="text-lg font-bold tracking-tight leading-none">Email Masuk</h1>
                             <span className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-wider">
-                                {data?.messages.length || 0} messages
+                                {data?.messages.length || 0} email
                             </span>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => loadInbox()} disabled={loading} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                        <Button variant="outline" size="sm" onClick={() => loadInbox()} disabled={loading} className="h-8 rounded-full px-3 text-xs font-medium">
                             <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            <span className="ml-2 hidden sm:inline">Muat ulang</span>
                         </Button>
                     </div>
                     {data && data.messages.length > 0 && (
@@ -81,7 +83,7 @@ export function InboxPage() {
                             <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 type="text"
-                                placeholder="Search sender or subject..."
+                                placeholder="Cari pengirim atau judul email..."
                                 className="w-full bg-background/60 pl-9 h-8 text-xs rounded-full border-border/60 focus-visible:ring-1"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -115,7 +117,8 @@ export function InboxPage() {
                     {!loading && data?.messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                             <Inbox className="w-10 h-10 opacity-20 mb-3" />
-                            <p className="text-sm font-medium">All caught up!</p>
+                            <p className="text-sm font-medium">Tidak ada email masuk</p>
+                            <p className="text-xs opacity-70 mt-1">Coba muat ulang atau pilih akun lain.</p>
                         </div>
                     )}
 
@@ -161,7 +164,7 @@ export function InboxPage() {
                     {data?.nextLink && (
                         <div className="p-4 flex justify-center border-t border-border/10 mt-2">
                             <Button variant="secondary" size="sm" onClick={() => loadInbox(data.nextLink)} disabled={loading} className="w-full max-w-[200px] rounded-full text-xs font-semibold h-8">
-                                {loading ? "Loading..." : "Load Older Messages"}
+                                {loading ? "Memuat..." : "Muat Email Lama"}
                             </Button>
                         </div>
                     )}
@@ -177,8 +180,8 @@ export function InboxPage() {
                 <div className="flex-1 hidden lg:flex flex-col items-center justify-center h-full bg-muted/5 min-w-0 z-10 w-full">
                     <div className="text-center p-8 max-w-sm">
                         <MailX className="w-16 h-16 text-muted-foreground opacity-20 mx-auto mb-6" />
-                        <h3 className="text-xl font-semibold tracking-tight text-foreground/80">No message selected</h3>
-                        <p className="text-sm text-muted-foreground mt-2">Select a message from the inbox on the left to read its contents.</p>
+                        <h3 className="text-xl font-semibold tracking-tight text-foreground/80">Pilih email untuk dibaca</h3>
+                        <p className="text-sm text-muted-foreground mt-2">Klik salah satu email di daftar kiri untuk melihat isi pesannya.</p>
                     </div>
                 </div>
             )}

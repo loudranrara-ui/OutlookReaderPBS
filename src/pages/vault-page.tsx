@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Shield, Lock, Unlock, KeyRound, Plus, Trash2, Github, EyeOff, Server, Copy, Download } from "lucide-react"
+import { Shield, Lock, Unlock, KeyRound, Plus, Trash2, EyeOff, Server, Copy, Download } from "lucide-react"
 import { toast } from "sonner"
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -46,12 +46,12 @@ export function VaultManager() {
         if (str) {
             const ok = await copyToClipboard(str)
             if (ok) {
-                toast.success("Account credential copied to clipboard")
+                toast.success("Data akun berhasil disalin")
             } else {
-                toast.error("Failed to copy to clipboard")
+                toast.error("Gagal menyalin data akun")
             }
         } else {
-            toast.error("Account details not available in session")
+            toast.error("Data akun belum bisa dibuka. Masukkan kunci keamanan terlebih dahulu.")
         }
     }
 
@@ -60,12 +60,12 @@ export function VaultManager() {
         if (str) {
             const ok = await copyToClipboard(str)
             if (ok) {
-                toast.success(`${accounts.length} account credential(s) copied to clipboard`)
+                toast.success(`${accounts.length} data akun berhasil disalin`)
             } else {
-                toast.error("Failed to copy to clipboard")
+                toast.error("Gagal menyalin data akun")
             }
         } else {
-            toast.error("No accounts available to export")
+            toast.error("Belum ada akun yang bisa diekspor")
         }
     }
 
@@ -75,35 +75,35 @@ export function VaultManager() {
         const success = await unlockVault(passphrase)
         setLoading(false)
         if (success) {
-            toast.success("Vault unlocked")
+            toast.success("Akun berhasil dibuka")
         } else {
-            toast.error("Incorrect passphrase or corrupted vault")
+            toast.error("Kunci keamanan salah atau data akun rusak")
         }
     }
 
     const handleInit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (passphrase.length < 4) {
-            return toast.error("Passphrase must be at least 4 characters")
+            return toast.error("Kunci keamanan minimal 4 karakter")
         }
         await initializeVault(passphrase, isEphemeral)
         toast.success(isEphemeral
-            ? "Ephemeral vault initialized. Data will clear when tab closes."
-            : "Vault initialized. You can now add accounts.")
+            ? "Mode sementara aktif. Data akan hilang saat tab ditutup."
+            : "Kunci keamanan dibuat. Sekarang Anda bisa menambahkan akun.")
     }
 
     const handleAddAccount = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!newCreds.includes(":") && !newCreds.includes("|")) return toast.error("Invalid credential format")
-        if (isLocked) return toast.error("Unlock vault first")
+        if (!newCreds.includes(":") && !newCreds.includes("|")) return toast.error("Format data akun belum benar")
+        if (isLocked) return toast.error("Buka kunci keamanan terlebih dahulu")
 
         setLoading(true)
         try {
             await addAccount(newCreds, passphrase)
             setNewCreds("")
-            toast.success("Account securely encrypted and stored")
+            toast.success("Akun berhasil disimpan dengan aman")
         } catch (err: any) {
-            toast.error(err.message || "Failed to add account")
+            toast.error(err.message || "Gagal menambahkan akun")
         } finally {
             setLoading(false)
         }
@@ -124,18 +124,18 @@ export function VaultManager() {
                         <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-4 ring-1 ring-primary/20 shadow-inner">
                             {hasVault ? <Shield className="w-8 h-8 text-primary drop-shadow-sm" /> : <KeyRound className="w-8 h-8 text-primary drop-shadow-sm" />}
                         </div>
-                        <CardTitle className="text-2xl font-bold tracking-tight">{hasVault ? "Encrypted Vault" : "Initialize Vault"}</CardTitle>
+                        <CardTitle className="text-2xl font-bold tracking-tight">{hasVault ? "Buka Kunci Akun" : "Buat Kunci Keamanan"}</CardTitle>
                         <CardDescription className="text-sm font-medium opacity-80 leading-relaxed px-2">
                             {hasVault
-                                ? "Enter your master passphrase to decrypt and access your accounts."
-                                : "Create a master passphrase. This will be used to encrypt all your credentials locally."}
+                                ? "Masukkan kunci keamanan untuk membuka daftar akun email Anda."
+                                : "Buat kunci yang mudah Anda ingat. Kunci ini dipakai untuk mengamankan akun di browser ini."}
                         </CardDescription>
                     </CardHeader>
                     <form onSubmit={hasVault ? handleUnlock : handleInit} className="px-6 pb-6 space-y-6">
                         <div className="relative group">
                             <Input
                                 type="password"
-                                placeholder="Master Passphrase"
+                                placeholder="Kunci keamanan"
                                 value={passphrase}
                                 onChange={(e) => setPassphrase(e.target.value)}
                                 className="bg-background/40 border-border/50 h-14 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-muted-foreground/40 shadow-inner transition-all focus:bg-background/80 focus:ring-1 focus:border-primary/50 rounded-xl"
@@ -158,7 +158,7 @@ export function VaultManager() {
                                     htmlFor="ephemeral"
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
                                 >
-                                    Session-only mode (Ephemeral)
+                                    Mode sementara, hapus data saat tab ditutup
                                 </label>
                             </div>
                         )}
@@ -167,7 +167,7 @@ export function VaultManager() {
                             className="w-full h-12 text-base font-semibold rounded-xl shadow-lg hover:shadow-primary/25 transition-all duration-300"
                             disabled={loading || !passphrase}
                         >
-                            {loading ? "Processing..." : (hasVault ? <><Unlock className="w-5 h-5 mr-2" /> Unlock Vault</> : <><KeyRound className="w-5 h-5 mr-2" /> Create Vault</>)}
+                            {loading ? "Memproses..." : (hasVault ? <><Unlock className="w-5 h-5 mr-2" /> Buka Akun</> : <><KeyRound className="w-5 h-5 mr-2" /> Buat Kunci</>)}
                         </Button>
                     </form>
 
@@ -177,25 +177,13 @@ export function VaultManager() {
                             <div className="flex items-center justify-center gap-4 text-muted-foreground/70">
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <a href="https://github.com/Dissociable/OutlookReader" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium hover:text-primary transition-colors cursor-pointer">
-                                            <Github className="w-3.5 h-3.5" />
-                                            <span>Open Source</span>
-                                        </a>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="max-w-[250px] text-center">
-                                        <p>This project is 100% open source. You can transparently inspect the code to verify your credentials are safe.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
                                         <div className="flex items-center gap-1.5 text-[11px] font-medium hover:text-primary transition-colors cursor-help">
                                             <EyeOff className="w-3.5 h-3.5" />
-                                            <span>No Logging</span>
+                                            <span>Tersimpan lokal</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" className="max-w-[250px] text-center">
-                                        <p>We do not track, log, or store your credentials remotely. Everything remains encrypted locally in your browser.</p>
+                                        <p>Data akun dienkripsi dan disimpan di browser ini. Tidak dikirim ke database aplikasi.</p>
                                     </TooltipContent>
                                 </Tooltip>
 
@@ -203,11 +191,11 @@ export function VaultManager() {
                                     <TooltipTrigger asChild>
                                         <div className="flex items-center gap-1.5 text-[11px] font-medium hover:text-primary transition-colors cursor-help">
                                             <Server className="w-3.5 h-3.5" />
-                                            <span>Direct API</span>
+                                            <span>Microsoft API</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom" className="max-w-[260px] text-center">
-                                        <p>Excluding one proxy request to bypass CORS for token retrieval, all requests connect directly to the Microsoft Graph API.</p>
+                                        <p>Email dibaca melalui Microsoft Graph API menggunakan token akun yang Anda simpan.</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
@@ -230,29 +218,29 @@ export function VaultManager() {
                             <Shield className="w-6 h-6 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Vault Manager</h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">Your accounts are currently decrypted in memory.</p>
+                            <h1 className="text-2xl font-bold tracking-tight">Kelola Akun</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">Tambah, pilih, salin, atau hapus akun email dari browser ini.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         {accounts.length > 0 && (
                             <Button variant="outline" size="sm" onClick={handleExportAll} className="rounded-full h-9 px-3">
                                 <Download className="w-4 h-4 mr-2" />
-                                Export All
+                                Salin Semua
                             </Button>
                         )}
                         <Button variant="outline" size="sm" onClick={() => {
                             lockVault()
                             setPassphrase("")
-                            toast.info("Vault locked securely")
+                            toast.info("Akun dikunci")
                         }} className="shrink-0 rounded-full h-9 px-4 hidden sm:flex">
                             <Lock className="w-4 h-4 mr-2" />
-                            Lock Vault
+                            Kunci
                         </Button>
                         <Button variant="outline" size="icon" onClick={() => {
                             lockVault()
                             setPassphrase("")
-                            toast.info("Vault locked securely")
+                            toast.info("Akun dikunci")
                         }} className="shrink-0 sm:hidden rounded-full">
                             <Lock className="w-4 h-4" />
                         </Button>
@@ -263,9 +251,9 @@ export function VaultManager() {
                     {/* Active Accounts List */}
                     <div className="md:col-span-3 space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold tracking-tight">Stored Accounts</h2>
+                            <h2 className="text-lg font-semibold tracking-tight">Akun Tersimpan</h2>
                             <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                                {accounts.length} Total
+                                {accounts.length} akun
                             </span>
                         </div>
 
@@ -273,8 +261,8 @@ export function VaultManager() {
                             {accounts.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                                     <KeyRound className="w-10 h-10 opacity-20 mb-3" />
-                                    <p className="text-sm font-medium">No accounts in vault</p>
-                                    <p className="text-xs opacity-70 mt-1">Import a credential string to get started.</p>
+                                    <p className="text-sm font-medium">Belum ada akun</p>
+                                    <p className="text-xs opacity-70 mt-1">Tempel data akun di kolom sebelah kanan untuk mulai membaca email.</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border/50">
@@ -287,10 +275,10 @@ export function VaultManager() {
                                                 <span className="font-medium text-sm truncate">{acc.email}</span>
                                             </div>
                                             <div className="flex items-center gap-1 shrink-0">
-                                                <Button variant="ghost" size="sm" onClick={() => handleCopySingle(acc.id)} title="Copy credential string" className="h-8 px-2 text-muted-foreground hover:text-foreground">
+                                                <Button variant="ghost" size="sm" onClick={() => handleCopySingle(acc.id)} title="Salin data akun" className="h-8 px-2 text-muted-foreground hover:text-foreground">
                                                     <Copy className="w-4 h-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => removeAccount(acc.id)} title="Delete account" className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                                <Button variant="ghost" size="sm" onClick={() => removeAccount(acc.id)} title="Hapus akun" className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10">
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
@@ -303,17 +291,17 @@ export function VaultManager() {
 
                     {/* Add Account Sidebar */}
                     <div className="md:col-span-2 space-y-4">
-                        <h2 className="text-lg font-semibold tracking-tight">Add Account</h2>
+                        <h2 className="text-lg font-semibold tracking-tight">Tambah Akun</h2>
                         <Card className="border-border/50 shadow-sm bg-background/60 backdrop-blur-sm">
                             <form onSubmit={handleAddAccount}>
                                 <CardContent className="pt-6 space-y-4">
                                     <div className="space-y-2">
                                         <p className="text-xs text-muted-foreground font-medium mb-2">
-                                            Format: <code className="text-[10px] bg-muted px-1 py-0.5 rounded text-foreground">email:password:refresh_token:client_id</code>
+                                            Tempel data akun di bawah ini. Format didukung: <code className="text-[10px] bg-muted px-1 py-0.5 rounded text-foreground">email:password:refresh_token:client_id</code>
                                         </p>
                                         <Input
                                             type="text"
-                                            placeholder="Paste credential string..."
+                                            placeholder="Tempel data akun di sini..."
                                             value={newCreds}
                                             onChange={(e) => setNewCreds(e.target.value)}
                                             disabled={loading}
@@ -322,7 +310,7 @@ export function VaultManager() {
                                     </div>
                                     <Button type="submit" disabled={loading || !newCreds} className="w-full h-10 rounded-xl shadow-sm">
                                         <Plus className="w-4 h-4 mr-2" />
-                                        Import & Encrypt
+                                        Simpan Akun
                                     </Button>
                                 </CardContent>
                             </form>
