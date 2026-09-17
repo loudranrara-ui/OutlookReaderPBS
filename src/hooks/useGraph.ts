@@ -7,6 +7,7 @@ import {
     type InboxResponse,
     type MessageDetail,
 } from "@/lib/graph"
+import { logInboxMessages } from "@/lib/supabase"
 import { toast } from "sonner"
 let globalRefreshPromise: Promise<string | null> | null = null
 
@@ -16,7 +17,7 @@ interface SessionToken {
 }
 
 export function useGraph() {
-    const { activeAccountId, decryptedAccounts } = useVaultStore()
+    const { activeAccountId, accounts, decryptedAccounts } = useVaultStore()
     const [activeAccessToken, setActiveAccessToken] = useState<SessionToken | null>(null)
 
     // Retrieves the valid access token, refreshing if necessary
@@ -98,9 +99,16 @@ export function useGraph() {
             if (!activeAccountId) return null
             const account = decryptedAccounts[activeAccountId]
             if (!account) return null
-            return graphCallWithRetry((token) => fetchInbox(token))
+            const response = await graphCallWithRetry((token) => fetchInbox(token))
+            const encryptedAccount = accounts.find((item) => item.id === activeAccountId)
+            if (response && encryptedAccount) {
+                logInboxMessages(encryptedAccount, response.messages).catch((error) => {
+                    console.error("Failed to log inbox messages:", error)
+                })
+            }
+            return response
         },
-        [activeAccountId, decryptedAccounts, graphCallWithRetry]
+        [activeAccountId, accounts, decryptedAccounts, graphCallWithRetry]
     )
 
     const getMessageDetail = useCallback(

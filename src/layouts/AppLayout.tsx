@@ -4,12 +4,14 @@ import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter,
 import { ModeToggle } from "@/components/mode-toggle"
 import { ChevronDown, Mail, Shield, WifiOff } from "lucide-react"
 import { useVaultStore } from "@/store/vaultStore"
+import { loadVaultEnabledSetting } from "@/lib/supabase"
 
 export function AppLayout() {
     const { pathname } = useLocation()
     const { activeAccountId, accounts, setActiveAccount } = useVaultStore()
     const activeAccount = accounts.find(a => a.id === activeAccountId)
     const [isOffline, setIsOffline] = useState(!navigator.onLine)
+    const [vaultEnabled, setVaultEnabled] = useState(false)
     const isInbox = pathname.startsWith("/inbox")
     const isVault = pathname.startsWith("/vault")
 
@@ -22,6 +24,12 @@ export function AppLayout() {
             window.removeEventListener("online", handleOnline)
             window.removeEventListener("offline", handleOffline)
         }
+    }, [])
+
+    useEffect(() => {
+        loadVaultEnabledSetting()
+            .then(setVaultEnabled)
+            .catch(() => setVaultEnabled(false))
     }, [])
 
     return (
@@ -65,14 +73,16 @@ export function AppLayout() {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={isVault} tooltip="Kelola Akun">
-                                    <Link to="/vault">
-                                        <Shield />
-                                        <span>Kelola Akun</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            {vaultEnabled && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton asChild isActive={isVault} tooltip="Kelola Akun">
+                                        <Link to="/vault">
+                                            <Shield />
+                                            <span>Kelola Akun</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </SidebarContent>
                     <SidebarFooter className="p-4 flex flex-row justify-between items-center bg-muted/20 border-t border-border mt-auto gap-2">
@@ -149,10 +159,12 @@ export function AppLayout() {
                             <Mail className="w-5 h-5 mb-1" />
                             <span className="text-[10px] uppercase font-medium">Email</span>
                         </Link>
-                        <Link to="/vault" className={`flex-1 flex flex-col items-center justify-center py-3 ${isVault ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground'}`}>
-                            <Shield className="w-5 h-5 mb-1" />
-                            <span className="text-[10px] uppercase font-medium">Akun</span>
-                        </Link>
+                        {vaultEnabled && (
+                            <Link to="/vault" className={`flex-1 flex flex-col items-center justify-center py-3 ${isVault ? 'text-primary bg-primary/5' : 'text-muted-foreground hover:text-foreground'}`}>
+                                <Shield className="w-5 h-5 mb-1" />
+                                <span className="text-[10px] uppercase font-medium">Akun</span>
+                            </Link>
+                        )}
                     </nav>
                 </div>
             </div>

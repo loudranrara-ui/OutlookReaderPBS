@@ -2,9 +2,23 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { decryptAccount, encryptAccount, type EncryptedAccountRecord } from "@/lib/crypto"
 import { parseCredentialString, type ParsedCredential } from "@/lib/validation"
+import { deleteRemoteAccount, isSupabaseConfigured, loadRemoteAccounts, upsertRemoteAccount } from "@/lib/supabase"
+
+const SESSION_PASSPHRASE_KEY = "outlookreader-session-passphrase"
+
+function saveSessionPassphrase(passphrase: string | null) {
+    if (typeof window === "undefined") return
+
+    if (passphrase) {
+        sessionStorage.setItem(SESSION_PASSPHRASE_KEY, passphrase)
+    } else {
+        sessionStorage.removeItem(SESSION_PASSPHRASE_KEY)
+    }
+}
 
 interface VaultState {
     isLocked: boolean
+    hasHydrated: boolean
     hasVault: boolean
     isEphemeral: boolean
     accounts: EncryptedAccountRecord[]
@@ -22,6 +36,7 @@ interface VaultState {
     removeAccount: (accountId: string) => void
     setActiveAccount: (accountId: string) => void
     updateAccountRefreshToken: (accountId: string, newRefreshToken: string) => Promise<void>
+    syncRemoteAccounts: (passphrase?: string) => Promise<void>
     getExportString: (accountId?: string) => string
 }
 
@@ -29,6 +44,7 @@ export const useVaultStore = create<VaultState>()(
     persist(
         (set, get) => ({
             isLocked: true,
+            hasHydrated: false,
             hasVault: false,
             isEphemeral: false,
             accounts: [],
@@ -37,13 +53,41 @@ export const useVaultStore = create<VaultState>()(
             sessionPassphrase: null,
 
             initializeVault: async (passphrase: string, ephemeral = false) => {
+                if (isSupabaseConfigured) {
+                    saveSessionPassphrase(passphrase)
+                    set({ isLocked: false, hasVault: false, isEphemeral: false, accounts: [], decryptedAccounts: {}, activeAccountId: null, sessionPassphrase: passphrase })
+                    return true
+                }
+
+                saveSessionPassphrase(passphrase)
                 set({ isLocked: false, hasVault: true, isEphemeral: ephemeral, sessionPassphrase: passphrase })
                 return true
             },
 
             unlockVault: async (passphrase: string) => {
-                const { accounts } = get()
+                let { accounts, activeAccountId } = get()
+
+                if (isSupabaseConfigured) {
+                    try {
+                        const remoteAccounts = await loadRemoteAccounts()
+                        accounts = remoteAccounts
+                        activeAccountId = activeAccountId && remoteAccounts.some((account) => account.id === activeAccountId)
+                            ? activeAccountId
+                            : remoteAccounts[0]?.id || null
+                        set({ accounts: remoteAccounts, hasVault: remoteAccounts.length > 0, activeAccountId })
+                    } catch (error) {
+                        console.error("Failed to load remote accounts:", error)
+                    }
+                }
+
                 if (accounts.length === 0) {
+                    if (isSupabaseConfigured) {
+                        saveSessionPassphrase(null)
+                        set({ isLocked: true, hasVault: false, accounts: [], decryptedAccounts: {}, activeAccountId: null, sessionPassphrase: null })
+                        return false
+                    }
+
+                    saveSessionPassphrase(passphrase)
                     set({ isLocked: false, sessionPassphrase: passphrase })
                     return true
                 }
@@ -53,7 +97,17 @@ export const useVaultStore = create<VaultState>()(
                     for (const acc of accounts) {
                         decrypted[acc.id] = await decryptAccount(acc, passphrase)
                     }
-                    set({ isLocked: false, decryptedAccounts: decrypted, sessionPassphrase: passphrase })
+                    const nextActiveAccountId = activeAccountId && decrypted[activeAccountId]
+                        ? activeAccountId
+                        : accounts[0].id
+
+                    saveSessionPassphrase(passphrase)
+                    set({
+                        isLocked: false,
+                        decryptedAccounts: decrypted,
+                        sessionPassphrase: passphrase,
+                        activeAccountId: nextActiveAccountId,
+                    })
                     return true
                 } catch (e) {
                     return false
@@ -62,14 +116,18 @@ export const useVaultStore = create<VaultState>()(
 
             lockVault: () => {
                 // Secure memory wipe of decrypted accounts and session passphrase
-                set({ isLocked: true, decryptedAccounts: {}, sessionPassphrase: null, activeAccountId: null })
+                saveSessionPassphrase(null)
+                set({ isLocked: true, decryptedAccounts: {}, sessionPassphrase: null })
             },
 
             addAccount: async (credentialString: string, passphrase: string) => {
+                if (isSupabaseConfigured) throw new Error("Akun hanya bisa ditambahkan melalui halaman admin")
                 if (get().isLocked) throw new Error("Vault is locked")
 
                 const parsed = parseCredentialString(credentialString)
                 const encrypted = await encryptAccount(parsed, passphrase)
+
+                await upsertRemoteAccount(encrypted)
 
                 set((state) => ({
                     hasVault: true,
@@ -81,6 +139,12 @@ export const useVaultStore = create<VaultState>()(
             },
 
             removeAccount: (accountId: string) => {
+                if (isSupabaseConfigured) return
+
+                deleteRemoteAccount(accountId).catch((error) => {
+                    console.error("Failed to delete remote account:", error)
+                })
+
                 set((state) => {
                     const newAccounts = state.accounts.filter(a => a.id !== accountId)
                     const newDecrypted = { ...state.decryptedAccounts }
@@ -121,6 +185,9 @@ export const useVaultStore = create<VaultState>()(
                         if (idx !== -1) {
                             updatedAccounts[idx] = reEncrypted
                         }
+                        await upsertRemoteAccount(reEncrypted).catch((error) => {
+                            console.error("Failed to update remote account:", error)
+                        })
                     }
                 }
 
@@ -130,6 +197,31 @@ export const useVaultStore = create<VaultState>()(
                         ...prev.decryptedAccounts,
                         [accountId]: updatedCred,
                     },
+                }))
+            },
+
+            syncRemoteAccounts: async (passphrase?: string) => {
+                if (!isSupabaseConfigured) return
+
+                const state = get()
+                const key = passphrase || state.sessionPassphrase
+                if (!key) return
+
+                const remoteAccounts = await loadRemoteAccounts()
+                if (remoteAccounts.length === 0) return
+
+                const decrypted: Record<string, ParsedCredential> = {}
+                for (const account of remoteAccounts) {
+                    decrypted[account.id] = await decryptAccount(account, key)
+                }
+
+                set((prev) => ({
+                    hasVault: true,
+                    accounts: remoteAccounts,
+                    decryptedAccounts: decrypted,
+                    activeAccountId: prev.activeAccountId && decrypted[prev.activeAccountId]
+                        ? prev.activeAccountId
+                        : remoteAccounts[0]?.id || null,
                 }))
             },
 
@@ -157,10 +249,10 @@ export const useVaultStore = create<VaultState>()(
             name: "outlookreader-vault",
             // Only persist encrypted records and flags, NEVER the decrypted session state
             partialize: (state) => ({
-                hasVault: state.hasVault,
-                isEphemeral: state.isEphemeral,
-                accounts: state.accounts,
-                activeAccountId: state.activeAccountId
+                hasVault: isSupabaseConfigured ? false : state.hasVault,
+                isEphemeral: isSupabaseConfigured ? false : state.isEphemeral,
+                accounts: isSupabaseConfigured ? [] : state.accounts,
+                activeAccountId: isSupabaseConfigured ? null : state.activeAccountId
             }),
             storage: createJSONStorage(() => ({
                 getItem: (name: string) => {
@@ -185,7 +277,40 @@ export const useVaultStore = create<VaultState>()(
                     localStorage.removeItem(name)
                     sessionStorage.removeItem(name)
                 }
-            }))
+            })),
+            onRehydrateStorage: () => async (state) => {
+                if (!state || typeof window === "undefined") return
+
+                if (isSupabaseConfigured) {
+                    state.accounts = []
+                    state.hasVault = false
+                    state.activeAccountId = null
+                }
+
+                const passphrase = sessionStorage.getItem(SESSION_PASSPHRASE_KEY)
+                if (!passphrase) {
+                    state.hasHydrated = true
+                    return
+                }
+
+                if (state.accounts.length === 0) {
+                    state.isLocked = false
+                    state.sessionPassphrase = passphrase
+                    state.hasHydrated = true
+                    return
+                }
+
+                try {
+                    await state.unlockVault(passphrase)
+                    state.hasHydrated = true
+                } catch {
+                    saveSessionPassphrase(null)
+                    state.isLocked = true
+                    state.decryptedAccounts = {}
+                    state.sessionPassphrase = null
+                    state.hasHydrated = true
+                }
+            }
         }
     )
 )

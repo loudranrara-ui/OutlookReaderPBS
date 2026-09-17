@@ -35,7 +35,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export function VaultManager() {
-    const { hasVault, isLocked, accounts, initializeVault, unlockVault, lockVault, addAccount, removeAccount, getExportString } = useVaultStore()
+    const { hasVault, hasHydrated, isLocked, accounts, initializeVault, unlockVault, lockVault, addAccount, removeAccount, getExportString } = useVaultStore()
     const [passphrase, setPassphrase] = useState("")
     const [isEphemeral, setIsEphemeral] = useState(false)
     const [newCreds, setNewCreds] = useState("")
@@ -107,6 +107,14 @@ export function VaultManager() {
         } finally {
             setLoading(false)
         }
+    }
+
+    if (!hasHydrated) {
+        return (
+            <div className="flex min-h-[70vh] w-full items-center justify-center text-sm text-muted-foreground">
+                Menyiapkan akun...
+            </div>
+        )
     }
 
     if (isLocked) {
@@ -249,7 +257,7 @@ export function VaultManager() {
 
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
                     {/* Active Accounts List */}
-                    <div className="md:col-span-3 space-y-4">
+                    <div className="md:col-span-3 space-y-4 order-2 md:order-1">
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-semibold tracking-tight">Akun Tersimpan</h2>
                             <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
@@ -290,7 +298,7 @@ export function VaultManager() {
                     </div>
 
                     {/* Add Account Sidebar */}
-                    <div className="md:col-span-2 space-y-4">
+                    <div className="md:col-span-2 space-y-4 order-1 md:order-2">
                         <h2 className="text-lg font-semibold tracking-tight">Tambah Akun</h2>
                         <Card className="border-border/50 shadow-sm bg-background/60 backdrop-blur-sm">
                             <form onSubmit={handleAddAccount}>

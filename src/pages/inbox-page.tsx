@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input"
 import { RefreshCcw, MailX, Inbox, Search } from "lucide-react"
 import { isToday } from "date-fns"
 import { Link, Outlet, useParams, useLocation, Navigate } from "react-router-dom"
+import { loadManagedAccountSummaries, loadVaultEnabledSetting, type ManagedAccountSummary } from "@/lib/supabase"
 
 export function InboxPage() {
-    const { hasVault, isLocked, activeAccountId, accounts } = useVaultStore()
+    const { hasVault, hasHydrated, isLocked, activeAccountId, accounts, setActiveAccount, unlockVault } = useVaultStore()
     const { getInbox, hasActiveAccount } = useGraph()
     const { id: selectedMessageId } = useParams()
     const location = useLocation()
@@ -19,6 +20,10 @@ export function InboxPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
+    const [vaultEnabled, setVaultEnabled] = useState(false)
+    const [managedAccounts, setManagedAccounts] = useState<ManagedAccountSummary[]>([])
+    const [accessKey, setAccessKey] = useState("")
+    const [unlocking, setUnlocking] = useState(false)
 
     const filteredMessages = data?.messages.filter(msg => {
         if (!searchQuery) return true
@@ -46,6 +51,11 @@ export function InboxPage() {
     }
 
     useEffect(() => {
+        if (hasHydrated && !isLocked && accounts.length > 0 && !activeAccountId) {
+            setActiveAccount(accounts[0].id)
+            return
+        }
+
         if (!isLocked && hasActiveAccount) {
             setData(null)
             loadInbox()
@@ -53,12 +63,86 @@ export function InboxPage() {
             setData(null)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLocked, activeAccountId, hasActiveAccount])
+    }, [hasHydrated, isLocked, activeAccountId, hasActiveAccount, accounts, setActiveAccount])
+
+    useEffect(() => {
+        Promise.all([
+            loadVaultEnabledSetting().catch(() => false),
+            loadManagedAccountSummaries().catch(() => []),
+        ]).then(([enabled, summaries]) => {
+            setVaultEnabled(enabled)
+            setManagedAccounts(summaries)
+        })
+    }, [])
 
     // CSS media queries handle responsiveness natively now.
 
-    if (!hasVault || isLocked || !hasActiveAccount || accounts.length === 0) {
+    if (!hasHydrated) {
+        return (
+            <div className="flex h-full w-full items-center justify-center bg-background text-sm text-muted-foreground">
+                Menyiapkan akun...
+            </div>
+        )
+    }
+
+    if (!hasVault || isLocked || accounts.length === 0) {
+        if (!vaultEnabled) {
+            const handleAccessUnlock = async (event: React.FormEvent) => {
+                event.preventDefault()
+                setUnlocking(true)
+                const success = await unlockVault(accessKey)
+                setUnlocking(false)
+                if (!success) {
+                    setError("Kunci akses salah atau akun belum tersedia")
+                }
+            }
+
+            return (
+                <div className="flex h-full w-full items-center justify-center bg-background p-6 text-center">
+                    <form onSubmit={handleAccessUnlock} className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-sm">
+                        <h2 className="text-lg font-semibold">Buka Email</h2>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Masukkan kunci akses yang diberikan admin untuk membuka akun email yang tersedia.
+                        </p>
+                        <div className="mt-4 rounded-xl border bg-background/60 p-3 text-left">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Akun tersedia</p>
+                            {managedAccounts.length === 0 ? (
+                                <p className="mt-2 text-sm text-muted-foreground">Belum ada akun dari admin. Muat ulang halaman setelah admin menambahkan akun.</p>
+                            ) : (
+                                <div className="mt-2 space-y-2">
+                                    {managedAccounts.map((account) => (
+                                        <div key={account.id} className="rounded-lg bg-muted/50 px-3 py-2">
+                                            <p className="truncate text-sm font-medium">{account.email}</p>
+                                            <p className="truncate text-[11px] text-muted-foreground">Client ID: {account.client_id}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <Input
+                            type="password"
+                            className="mt-4 text-center"
+                            placeholder="Kunci akses"
+                            value={accessKey}
+                            onChange={(event) => setAccessKey(event.target.value)}
+                        />
+                        {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
+                        <Button type="submit" className="mt-4 w-full" disabled={!accessKey || unlocking}>
+                            {unlocking ? "Membuka..." : "Buka Email"}
+                        </Button>
+                    </form>
+                </div>
+            )
+        }
         return <Navigate to="/vault" replace />
+    }
+
+    if (!activeAccountId) {
+        return (
+            <div className="flex h-full w-full items-center justify-center bg-background text-sm text-muted-foreground">
+                Memilih akun...
+            </div>
+        )
     }
 
     return (
