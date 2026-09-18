@@ -13,38 +13,38 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --radius: 0.25rem;
-  --background: #f4d6dc;
-  --foreground: #190304;
-  --card: #fff8f9;
-  --card-foreground: #190304;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #720002;
-  --primary-foreground: #ffffff;
-  --secondary: #f4d6dc;
-  --secondary-foreground: #190304;
-  --muted: #f4d6dc;
-  --muted-foreground: #720002;
-  --accent: #db8291;
-  --accent-foreground: #190304;
-  --destructive: #ef233c;
-  --border: #190304;
-  --input: #190304;
-  --ring: #190304;
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: #ffffff;
-  --sidebar-foreground: #190304;
-  --sidebar-primary: #720002;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #f4d6dc;
-  --sidebar-accent-foreground: #190304;
-  --sidebar-border: #190304;
-  --sidebar-ring: #190304;
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 body {
@@ -135,8 +135,6 @@ body {
 
   body {
     @apply bg-background text-foreground tracking-tight;
-    background-image: linear-gradient(90deg, rgb(25 3 4 / 0.04) 1px, transparent 1px), linear-gradient(rgb(25 3 4 / 0.04) 1px, transparent 1px);
-    background-size: 22px 22px;
   }
 }
 
@@ -166,59 +164,129 @@ body {
   --user-foam: #F4D6DC;
   --user-cream: #fff8f9;
   --user-ink: #2a0709;
+  color: #2a0709;
 }
 
 .user-brand-bg {
-  background: #fff7c7;
-  background-image: linear-gradient(90deg, rgb(25 3 4 / 0.055) 1px, transparent 1px), linear-gradient(rgb(25 3 4 / 0.055) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background:
+    radial-gradient(circle at 7% 6%, #ffffff 0 5.5rem, transparent 5.6rem),
+    radial-gradient(circle at 95% 11%, #db8291 0 8rem, transparent 8.1rem),
+    radial-gradient(circle at 72% 94%, #f4d6dc 0 12rem, transparent 12.1rem),
+    #fff8f9;
+  background-size: auto, auto, auto, 28px 28px;
+  background-image:
+    radial-gradient(circle at 7% 6%, #ffffff 0 5.5rem, transparent 5.6rem),
+    radial-gradient(circle at 95% 11%, #db8291 0 8rem, transparent 8.1rem),
+    radial-gradient(circle at 72% 94%, #f4d6dc 0 12rem, transparent 12.1rem),
+    linear-gradient(rgb(114 0 2 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(114 0 2 / 0.06) 1px, transparent 1px);
 }
 
 .user-glass-card {
-  background: #ffffff;
-  border: 3px solid #190304;
-  box-shadow: 8px 8px 0 #190304;
+  background: #fff8f9;
+  border: 2px solid #720002;
+  box-shadow: 7px 7px 0 #db8291;
 }
 
 .user-berry-gradient {
-  background: #720002;
+  background: linear-gradient(135deg, #720002 0%, #a32031 56%, #db8291 100%);
 }
 
-.neo-card {
-  border: 3px solid #190304;
-  box-shadow: 8px 8px 0 #190304;
-}
-
-.neo-shadow {
-  box-shadow: 6px 6px 0 #190304;
-}
-
-.neo-shadow-sm {
-  box-shadow: 4px 4px 0 #190304;
-}
-
+/* Colorful Neobrutalism: applied only inside product shells, never globally. */
 .brand-neo-bg {
   background:
-    radial-gradient(circle at 12% 14%, #ffffff 0 8rem, transparent 8.2rem),
-    radial-gradient(circle at 86% 18%, #db8291 0 9rem, transparent 9.2rem),
-    radial-gradient(circle at 70% 88%, #720002 0 10rem, transparent 10.2rem),
-    #f4d6dc;
+    radial-gradient(circle at 8% 10%, #db8291 0 7rem, transparent 7.1rem),
+    radial-gradient(circle at 94% 8%, #f4d6dc 0 9rem, transparent 9.1rem),
+    radial-gradient(circle at 76% 92%, #db8291 0 9rem, transparent 9.1rem),
+    #fff8f9;
   background-attachment: fixed;
 }
 
-.brand-panel-pink {
-  background: #f4d6dc;
-}
-
-.brand-panel-rose {
-  background: #db8291;
-}
-
+.brand-panel-cream,
+.brand-panel-pink,
+.brand-panel-rose,
 .brand-panel-berry {
-  background: #720002;
-  color: #ffffff;
+  border: 2px solid #720002 !important;
+  box-shadow: 7px 7px 0 #720002 !important;
+  border-radius: 0.875rem !important;
 }
 
-.brand-panel-cream {
+.brand-panel-cream { background: #fff8f9 !important; }
+.brand-panel-pink { background: #f4d6dc !important; color: #2a0709 !important; }
+.brand-panel-rose { background: #db8291 !important; color: #2a0709 !important; }
+.brand-panel-berry { background: #720002 !important; color: #ffffff !important; }
+
+.user-shell,
+.brand-neo-bg {
+  color: #2a0709;
+}
+
+.user-shell .text-muted-foreground,
+.brand-neo-bg .text-muted-foreground {
+  color: rgb(114 0 2 / 0.72);
+}
+
+.user-shell [data-slot="input"],
+.user-shell select,
+.brand-neo-bg [data-slot="input"],
+.brand-neo-bg select {
+  color: #2a0709;
+  background-color: #fff8f9;
+}
+
+.brand-panel-berry .text-muted-foreground,
+.brand-panel-berry .text-foreground {
+  color: rgb(255 255 255 / 0.82);
+}
+
+.brand-panel-berry [data-slot="card-title"],
+.brand-panel-berry h1,
+.brand-panel-berry h2,
+.brand-panel-berry h3,
+.brand-panel-berry p:not(.text-muted-foreground) {
+  color: #fff8f9;
+}
+
+.brand-panel-berry select,
+.brand-panel-berry [data-slot="input"] {
   background: #fff8f9;
+  color: #2a0709;
+}
+
+/* Nested white data cards/tables need dark text, not the parent Berry Jam text color. */
+.brand-panel-berry [class*="bg-white"],
+.brand-panel-berry .bg-background {
+  color: #2a0709;
+}
+
+.brand-panel-berry [class*="bg-white"] p,
+.brand-panel-berry .bg-background p,
+.brand-panel-berry [class*="bg-white"] .text-muted-foreground,
+.brand-panel-berry .bg-background .text-muted-foreground {
+  color: #2a0709;
+}
+
+.brand-neo-bg [data-slot="button"]:not([data-variant="ghost"]):not([data-variant="link"]),
+.user-shell [data-slot="button"]:not([data-variant="ghost"]):not([data-variant="link"]) {
+  border: 2px solid #720002;
+  box-shadow: 4px 4px 0 #db8291;
+  font-weight: 800;
+}
+
+.brand-neo-bg [data-slot="button"]:not([data-variant="ghost"]):not([data-variant="link"]):active,
+.user-shell [data-slot="button"]:not([data-variant="ghost"]):not([data-variant="link"]):active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 #db8291;
+}
+
+.brand-neo-bg [data-slot="input"],
+.user-shell [data-slot="input"] {
+  border: 2px solid #720002;
+  box-shadow: 3px 3px 0 rgb(219 130 145 / 0.8);
+}
+
+.brand-neo-bg select,
+.user-shell select {
+  border: 2px solid #720002;
+  box-shadow: 3px 3px 0 rgb(219 130 145 / 0.8);
 }

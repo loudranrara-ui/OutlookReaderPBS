@@ -20,9 +20,9 @@ import {
     isCurrentUserAdmin,
     isSupabaseConfigured,
     loadAdminAccounts,
+    loadAdminAccessKey,
     loadAdminInboxLogs,
-    loadVaultEnabledSetting,
-    updateVaultEnabledSetting,
+    updateAdminAccessKey,
     type InboxLogRow,
     type SupabaseAccountRow,
 } from "@/lib/supabase"
@@ -36,21 +36,22 @@ export function AdminPage() {
     const [accounts, setAccounts] = useState<SupabaseAccountRow[]>([])
     const [logs, setLogs] = useState<InboxLogRow[]>([])
     const [selectedAccountId, setSelectedAccountId] = useState("")
-    const [vaultEnabled, setVaultEnabled] = useState(false)
     const [newAccountCredential, setNewAccountCredential] = useState("")
-    const [newAccountKey, setNewAccountKey] = useState("")
+    const [currentAccessKey, setCurrentAccessKey] = useState("")
+    const [nextAccessKey, setNextAccessKey] = useState("")
+    const [hasAccessKey, setHasAccessKey] = useState(false)
 
     const loadAdminData = async (accountId = selectedAccountId) => {
         setLoading(true)
         try {
-            const [accountRows, logRows, vaultSetting] = await Promise.all([
+            const [accountRows, logRows, accessKey] = await Promise.all([
                 loadAdminAccounts(),
                 loadAdminInboxLogs(accountId || undefined),
-                loadVaultEnabledSetting(),
+                loadAdminAccessKey(),
             ])
             setAccounts(accountRows)
             setLogs(logRows)
-            setVaultEnabled(vaultSetting)
+            setHasAccessKey(Boolean(accessKey))
         } catch (error: any) {
             toast.error(error.message || "Gagal memuat data admin")
         } finally {
@@ -143,31 +144,32 @@ export function AdminPage() {
         await loadAdminData("")
     }
 
-    const handleToggleVault = async () => {
-        const nextValue = !vaultEnabled
+    const handleAddAdminAccount = async (event: React.FormEvent) => {
+        event.preventDefault()
         setLoading(true)
         try {
-            await updateVaultEnabledSetting(nextValue)
-            setVaultEnabled(nextValue)
-            toast.success(nextValue ? "Menu Kelola Akun ditampilkan" : "Menu Kelola Akun disembunyikan")
+            const importedCount = await addAdminManagedAccount(newAccountCredential)
+            setNewAccountCredential("")
+            toast.success(`Akun berhasil ditambahkan. ${importedCount} email terbaru dicatat.`)
+            await loadAdminData(selectedAccountId)
         } catch (error: any) {
-            toast.error(error.message || "Gagal mengubah pengaturan")
+            toast.error(error.message || "Gagal menambahkan akun")
         } finally {
             setLoading(false)
         }
     }
 
-    const handleAddAdminAccount = async (event: React.FormEvent) => {
+    const handleUpdateAccessKey = async (event: React.FormEvent) => {
         event.preventDefault()
         setLoading(true)
         try {
-            const importedCount = await addAdminManagedAccount(newAccountCredential, newAccountKey)
-            setNewAccountCredential("")
-            setNewAccountKey("")
-            toast.success(`Akun berhasil ditambahkan. ${importedCount} email terbaru dicatat.`)
-            await loadAdminData(selectedAccountId)
+            await updateAdminAccessKey(currentAccessKey, nextAccessKey)
+            setCurrentAccessKey("")
+            setNextAccessKey("")
+            setHasAccessKey(true)
+            toast.success("Kunci akses bersama berhasil diperbarui")
         } catch (error: any) {
-            toast.error(error.message || "Gagal menambahkan akun")
+            toast.error(error.message || "Gagal memperbarui kunci akses")
         } finally {
             setLoading(false)
         }
@@ -215,10 +217,8 @@ export function AdminPage() {
                         <AddAccountPanel
                             loading={loading}
                             newAccountCredential={newAccountCredential}
-                            newAccountKey={newAccountKey}
                             onAddAccount={handleAddAdminAccount}
                             onCredentialChange={setNewAccountCredential}
-                            onKeyChange={setNewAccountKey}
                         />
                     }
                 />
@@ -250,9 +250,13 @@ export function AdminPage() {
                     path="settings"
                     element={
                         <SettingsPanel
-                            vaultEnabled={vaultEnabled}
                             loading={loading}
-                            onToggleVault={handleToggleVault}
+                            hasAccessKey={hasAccessKey}
+                            currentAccessKey={currentAccessKey}
+                            nextAccessKey={nextAccessKey}
+                            onCurrentAccessKeyChange={setCurrentAccessKey}
+                            onNextAccessKeyChange={setNextAccessKey}
+                            onUpdateAccessKey={handleUpdateAccessKey}
                         />
                     }
                 />

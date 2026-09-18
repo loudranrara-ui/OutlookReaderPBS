@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useGraph } from "@/hooks/useGraph"
 import { useVaultStore } from "@/store/vaultStore"
-import type { InboxResponse } from "@/lib/graph"
+import { getFriendlyEmailError, type InboxResponse } from "@/lib/graph"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RefreshCcw, MailX, Inbox, Search } from "lucide-react"
 import { isToday } from "date-fns"
-import { Link, Outlet, useParams, useLocation, Navigate } from "react-router-dom"
-import { loadManagedAccountSummaries, loadVaultEnabledSetting, type ManagedAccountSummary } from "@/lib/supabase"
+import { Link, Outlet, useParams, useLocation } from "react-router-dom"
+import { loadManagedAccountSummaries, type ManagedAccountSummary } from "@/lib/supabase"
 
 export function InboxPage() {
     const { hasVault, hasHydrated, isLocked, activeAccountId, accounts, setActiveAccount, unlockVault } = useVaultStore()
@@ -20,10 +20,10 @@ export function InboxPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
-    const [vaultEnabled, setVaultEnabled] = useState(false)
     const [managedAccounts, setManagedAccounts] = useState<ManagedAccountSummary[]>([])
     const [accessKey, setAccessKey] = useState("")
     const [unlocking, setUnlocking] = useState(false)
+    const latestInboxRequest = useRef(0)
 
     const filteredMessages = data?.messages.filter(msg => {
         if (!searchQuery) return true
@@ -32,11 +32,12 @@ export function InboxPage() {
     })
 
     const loadInbox = async (nextLink?: string) => {
+        const requestId = ++latestInboxRequest.current
         setLoading(true)
         setError(null)
         try {
             const resp = await getInbox(nextLink)
-            if (resp) {
+            if (resp && requestId === latestInboxRequest.current) {
                 if (nextLink && data) {
                     setData({ messages: [...data.messages, ...resp.messages], nextLink: resp.nextLink })
                 } else {
@@ -44,9 +45,13 @@ export function InboxPage() {
                 }
             }
         } catch (err: any) {
-            setError(err.message || "Failed to load inbox")
+            if (requestId === latestInboxRequest.current) {
+                setError(getFriendlyEmailError(err))
+            }
         } finally {
-            setLoading(false)
+            if (requestId === latestInboxRequest.current) {
+                setLoading(false)
+            }
         }
     }
 
@@ -57,6 +62,7 @@ export function InboxPage() {
         }
 
         if (!isLocked && hasActiveAccount) {
+            latestInboxRequest.current += 1
             setData(null)
             loadInbox()
         } else {
@@ -66,13 +72,7 @@ export function InboxPage() {
     }, [hasHydrated, isLocked, activeAccountId, hasActiveAccount, accounts, setActiveAccount])
 
     useEffect(() => {
-        Promise.all([
-            loadVaultEnabledSetting().catch(() => false),
-            loadManagedAccountSummaries().catch(() => []),
-        ]).then(([enabled, summaries]) => {
-            setVaultEnabled(enabled)
-            setManagedAccounts(summaries)
-        })
+        loadManagedAccountSummaries().then(setManagedAccounts).catch(() => setManagedAccounts([]))
     }, [])
 
     // CSS media queries handle responsiveness natively now.
@@ -86,20 +86,19 @@ export function InboxPage() {
     }
 
     if (!hasVault || isLocked || accounts.length === 0) {
-        if (!vaultEnabled) {
-            const handleAccessUnlock = async (event: React.FormEvent) => {
-                event.preventDefault()
-                setUnlocking(true)
-                const success = await unlockVault(accessKey)
-                setUnlocking(false)
-                if (!success) {
-                    setError("Kunci akses salah atau akun belum tersedia")
-                }
+        const handleAccessUnlock = async (event: React.FormEvent) => {
+            event.preventDefault()
+            setUnlocking(true)
+            const success = await unlockVault(accessKey)
+            setUnlocking(false)
+            if (!success) {
+                setError("Kunci akses salah atau akun belum tersedia")
             }
+        }
 
-            return (
-                <div className="flex h-full w-full items-center justify-center p-6 text-center">
-                    <form onSubmit={handleAccessUnlock} className="user-glass-card relative w-full max-w-md overflow-hidden rounded-[2rem] p-7">
+        return (
+            <div className="flex h-full w-full items-center justify-center p-6 text-center">
+                <form onSubmit={handleAccessUnlock} className="user-glass-card relative w-full max-w-md overflow-hidden rounded-[2rem] p-7">
                         <div className="absolute inset-x-0 top-0 h-2 user-berry-gradient" />
                         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F4D6DC] text-[#720002] shadow-inner">
                             <MailX className="h-6 w-6" />
@@ -109,15 +108,18 @@ export function InboxPage() {
                             Masukkan kunci akses yang diberikan admin untuk membuka akun email yang tersedia.
                         </p>
                         <div className="mt-5 rounded-2xl border border-[#720002]/10 bg-white/65 p-3 text-left shadow-sm">
-                            <p className="text-xs font-black uppercase tracking-wider text-[#720002]/60">Akun tersedia</p>
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-xs font-black uppercase tracking-wider text-[#720002]/60">Pilih akun</p>
+                                {managedAccounts.length > 0 && <span className="rounded-full bg-[#F4D6DC] px-2 py-0.5 text-[10px] font-bold text-[#720002]">{managedAccounts.length} akun</span>}
+                            </div>
                             {managedAccounts.length === 0 ? (
                                 <p className="mt-2 text-sm text-[#720002]/60">Belum ada akun dari admin. Muat ulang halaman setelah admin menambahkan akun.</p>
                             ) : (
-                                <div className="mt-2 space-y-2">
+                                <div className="mt-2 max-h-40 space-y-1 overflow-y-auto pr-1">
                                     {managedAccounts.map((account) => (
-                                        <div key={account.id} className="rounded-xl bg-[#F4D6DC]/75 px-3 py-2 ring-1 ring-[#720002]/5">
+                                        <div key={account.id} className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-[#F4D6DC]/75">
+                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DB8291] text-[10px] font-black text-[#720002]">{account.email.slice(0, 1).toUpperCase()}</span>
                                             <p className="truncate text-sm font-bold text-[#720002]">{account.email}</p>
-                                            <p className="truncate text-[11px] text-[#720002]/55">Client ID: {account.client_id}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -134,11 +136,9 @@ export function InboxPage() {
                         <Button type="submit" className="user-berry-gradient mt-4 h-12 w-full rounded-2xl font-bold text-white shadow-lg shadow-[#720002]/20 hover:opacity-95" disabled={!accessKey || unlocking}>
                             {unlocking ? "Membuka..." : "Buka Email"}
                         </Button>
-                    </form>
-                </div>
-            )
-        }
-        return <Navigate to="/vault" replace />
+                </form>
+            </div>
+        )
     }
 
     if (!activeAccountId) {

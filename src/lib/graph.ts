@@ -30,6 +30,32 @@ export interface MessageDetail {
     bodyHtmlSanitized?: string // populated by UI
 }
 
+export function getFriendlyEmailError(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error || "")
+    const normalized = message.toLowerCase()
+
+    if (normalized.includes("invalid_grant") || normalized.includes("invalid token") || normalized.includes("token has expired")) {
+        return "Akun ini tidak dapat dibuka karena token aksesnya sudah tidak berlaku. Hubungi admin untuk memperbarui akun."
+    }
+    if (normalized.includes("invalid_client") || normalized.includes("client secret")) {
+        return "Konfigurasi aplikasi Microsoft untuk akun ini tidak valid. Hubungi admin."
+    }
+    if (normalized.includes("access denied") || normalized.includes("authorization_requestdenied") || normalized.includes("forbidden")) {
+        return "Microsoft menolak akses ke email ini. Periksa izin akun atau hubungi admin."
+    }
+    if (normalized.includes("unauthorized_access_token")) {
+        return "Sesi akun ini sudah berakhir. Sistem sedang mencoba memperbarui aksesnya."
+    }
+    if (normalized.includes("failed to fetch") || normalized.includes("network") || normalized.includes("fetcherror")) {
+        return "Tidak dapat terhubung ke Microsoft. Periksa koneksi internet lalu coba lagi."
+    }
+    if (normalized.includes("rate limit") || normalized.includes("too many requests")) {
+        return "Terlalu banyak permintaan ke Microsoft. Tunggu sebentar lalu coba lagi."
+    }
+
+    return "Email tidak dapat dimuat saat ini. Coba lagi atau hubungi admin bila masalah berlanjut."
+}
+
 interface GraphEmailAddress {
     emailAddress?: {
         address?: string

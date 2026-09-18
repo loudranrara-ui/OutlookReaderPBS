@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react"
 import { Outlet, Link, useLocation } from "react-router-dom"
-import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/mode-toggle"
-import { ChevronDown, Mail, Shield, WifiOff } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ChevronDown, Mail, WifiOff } from "lucide-react"
 import { useVaultStore } from "@/store/vaultStore"
-import { loadVaultEnabledSetting } from "@/lib/supabase"
 
 export function AppLayout() {
     const { pathname } = useLocation()
-    const { activeAccountId, accounts, setActiveAccount } = useVaultStore()
+    const { activeAccountId, accounts, isLocked, setActiveAccount } = useVaultStore()
     const activeAccount = accounts.find(a => a.id === activeAccountId)
     const [isOffline, setIsOffline] = useState(!navigator.onLine)
-    const [vaultEnabled, setVaultEnabled] = useState(false)
+    const [accountSearch, setAccountSearch] = useState("")
     const isInbox = pathname.startsWith("/inbox")
-    const isVault = pathname.startsWith("/vault")
+    const showNavigation = !isLocked && accounts.length > 0
+    const visibleAccounts = accounts.filter((account) => account.email.toLowerCase().includes(accountSearch.trim().toLowerCase()))
 
     useEffect(() => {
         const handleOnline = () => setIsOffline(false)
@@ -27,72 +27,43 @@ export function AppLayout() {
     }, [])
 
     useEffect(() => {
-        loadVaultEnabledSetting()
-            .then(setVaultEnabled)
-            .catch(() => setVaultEnabled(false))
-    }, [])
+        if (accountSearch.trim() && visibleAccounts.length === 1 && visibleAccounts[0].id !== activeAccountId) {
+            setActiveAccount(visibleAccounts[0].id)
+        }
+    }, [accountSearch, activeAccountId, setActiveAccount, visibleAccounts])
 
     return (
-        <SidebarProvider>
-            <div className="user-shell user-brand-bg flex min-h-screen w-full relative overflow-hidden text-[#2a0709]">
-                {/* Desktop Sidebar */}
-                <Sidebar className="hidden md:flex border-r border-[#720002]/10 bg-white/70 backdrop-blur-2xl">
-                    <SidebarHeader className="p-4 flex flex-col gap-4">
-                        <div className="user-glass-card flex items-center gap-3 rounded-3xl p-3">
-                            <div className="user-berry-gradient flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-lg shadow-[#720002]/20">
-                                <Mail className="w-5 h-5" />
-                            </div>
-                            <div className="min-w-0">
-                                <span className="block font-bold text-base leading-none text-[#720002]">Pembaca Email</span>
-                                <span className="mt-1 block text-xs text-[#720002]/60">Outlook & Hotmail</span>
-                            </div>
+        <div className="user-shell user-brand-bg flex min-h-screen w-full relative overflow-hidden text-[#2a0709]">
+            <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden relative">
+                {showNavigation && (
+                    <header className="hidden md:flex h-16 shrink-0 items-center justify-between border-b border-[#720002]/10 bg-white/75 px-6 backdrop-blur-2xl">
+                        <div className="flex items-center gap-1">
+                            <Link to="/inbox" className={`rounded-xl px-4 py-2 text-sm font-bold transition-colors ${isInbox ? "bg-[#720002] text-white" : "text-[#720002] hover:bg-[#F4D6DC]"}`}>
+                                Email Masuk
+                            </Link>
                         </div>
-
-                        {accounts.length > 0 && (
-                            <div className="user-glass-card p-3 rounded-2xl text-sm flex flex-col gap-2">
-                                <span className="text-[10px] text-[#720002]/60 font-bold uppercase tracking-wider">Akun yang dibuka</span>
-                                <select
-                                    className="w-full rounded-xl border border-[#720002]/15 bg-white/70 px-2 py-2 font-semibold truncate focus:ring-2 focus:ring-[#DB8291]/40 cursor-pointer text-sm outline-none text-[#720002]"
-                                    value={activeAccountId || ""}
-                                    onChange={(e) => setActiveAccount(e.target.value)}
-                                >
-                                    {accounts.map(acc => (
-                                        <option key={acc.id} value={acc.id}>{acc.email}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                    </SidebarHeader>
-                    <SidebarContent className="px-2">
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={isInbox} tooltip="Email Masuk">
-                                    <Link to="/inbox">
-                                        <Mail />
-                                        <span>Email Masuk</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            {vaultEnabled && (
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton asChild isActive={isVault} tooltip="Kelola Akun">
-                                        <Link to="/vault">
-                                            <Shield />
-                                            <span>Kelola Akun</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
+                        <div className="flex items-center gap-3">
+                            {accounts.length > 1 && (
+                                <Input
+                                    type="search"
+                                    value={accountSearch}
+                                    onChange={(event) => setAccountSearch(event.target.value)}
+                                    placeholder="Cari email..."
+                                    className="h-8 w-40 rounded-lg text-xs"
+                                />
                             )}
-                        </SidebarMenu>
-                    </SidebarContent>
-                    <SidebarFooter className="p-4 flex flex-row justify-between items-center bg-[#F4D6DC]/30 border-t border-[#720002]/10 mt-auto gap-2">
-                        <span className="text-xs font-medium text-[#720002]/60">Data terenkripsi</span>
-                        <ModeToggle />
-                    </SidebarFooter>
-                </Sidebar>
-
-                {/* Main Content Area */}
-                <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden relative">
+                            <select
+                                className="max-w-64 rounded-xl border border-[#720002]/15 bg-white px-3 py-2 text-sm font-bold text-[#720002] outline-none"
+                                value={activeAccountId || ""}
+                                onChange={(event) => setActiveAccount(event.target.value)}
+                            >
+                                {visibleAccounts.length === 0 && <option disabled>Tidak ada akun ditemukan</option>}
+                                {visibleAccounts.map((account) => <option key={account.id} value={account.id}>{account.email}</option>)}
+                            </select>
+                            <ModeToggle />
+                        </div>
+                    </header>
+                )}
                     <header className="md:hidden border-b border-[#720002]/10 bg-white/75 backdrop-blur-2xl shrink-0">
                         <div className="flex items-center justify-between p-4 pb-3">
                             <div className="flex items-center gap-2 min-w-0">
@@ -114,6 +85,13 @@ export function AppLayout() {
                         {accounts.length > 1 && (
                             <div className="px-4 pb-3">
                                 <label htmlFor="mobile-account-switcher" className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-[#720002]/60">Pilih akun</label>
+                                <Input
+                                    type="search"
+                                    value={accountSearch}
+                                    onChange={(event) => setAccountSearch(event.target.value)}
+                                    placeholder="Cari email..."
+                                    className="mb-2 h-10 rounded-xl text-sm"
+                                />
                                 <div className="relative">
                                     <select
                                         id="mobile-account-switcher"
@@ -121,7 +99,8 @@ export function AppLayout() {
                                         value={activeAccountId || ""}
                                         onChange={(e) => setActiveAccount(e.target.value)}
                                     >
-                                        {accounts.map(acc => (
+                                        {visibleAccounts.length === 0 && <option disabled>Tidak ada akun ditemukan</option>}
+                                        {visibleAccounts.map(acc => (
                                             <option key={acc.id} value={acc.id}>{acc.email}</option>
                                         ))}
                                     </select>
@@ -159,15 +138,8 @@ export function AppLayout() {
                             <Mail className="w-5 h-5 mb-1" />
                             <span className="text-[10px] uppercase font-medium">Email</span>
                         </Link>
-                        {vaultEnabled && (
-                            <Link to="/vault" className={`flex-1 flex flex-col items-center justify-center py-3 ${isVault ? 'text-[#720002] bg-[#F4D6DC]/70' : 'text-[#720002]/55 hover:text-[#720002]'}`}>
-                                <Shield className="w-5 h-5 mb-1" />
-                                <span className="text-[10px] uppercase font-medium">Akun</span>
-                            </Link>
-                        )}
                     </nav>
-                </div>
             </div>
-        </SidebarProvider>
+        </div>
     )
 }

@@ -1,12 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
-import { encryptAccount, type EncryptedAccountRecord } from "./crypto"
+import { decryptAccount, encryptAccount, type EncryptedAccountRecord } from "./crypto"
 import { exchangeRefreshToken, fetchInbox, type InboxMessage } from "./graph"
 import { parseCredentialString } from "./validation"
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
-const adminAccountKey = import.meta.env.VITE_ADMIN_ACCOUNT_KEY as string | undefined
 const deviceIdStorageKey = "outlookreader-device-id"
+const sharedAccessKeyName = "shared_access_key"
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
@@ -256,38 +256,73 @@ export async function deleteAdminAccount(accountId: string): Promise<void> {
     if (error) throw error
 }
 
-export async function loadVaultEnabledSetting(): Promise<boolean> {
-    if (!supabase) return true
+export async function loadAdminAccessKey(): Promise<string | null> {
+    if (!supabase) return null
 
     const { data, error } = await supabase
-        .from("app_settings")
+        .from("admin_settings")
         .select("value")
-        .eq("key", "vault_enabled")
+        .eq("key", sharedAccessKeyName)
         .maybeSingle()
 
     if (error) throw error
-    return data?.value === true
+    return data?.value || null
 }
 
-export async function updateVaultEnabledSetting(enabled: boolean): Promise<void> {
-    if (!supabase) return
+export async function updateAdminAccessKey(currentKey: string, nextKey: string): Promise<void> {
+    if (!supabase) throw new Error("Supabase belum dikonfigurasi")
+    if (nextKey.length < 4) throw new Error("Kunci akses minimal 4 karakter")
+
+    const existingKey = await loadAdminAccessKey()
+    const accounts = await loadAdminAccounts()
+
+    if (existingKey && existingKey !== currentKey) {
+        throw new Error("Kunci akses saat ini salah")
+    }
+
+    const reEncryptedAccounts = await Promise.all(accounts.map(async (account) => {
+        if (!existingKey) return account
+
+        const credential = await decryptAccount({
+            id: account.id,
+            email: account.email,
+            clientId: account.client_id,
+            cipherText: account.cipher_text,
+            iv: account.iv,
+            salt: account.salt,
+            createdAt: account.created_at_ms,
+            updatedAt: account.updated_at_ms,
+        }, existingKey)
+        const encrypted = await encryptAccount(credential, nextKey, account.id)
+        return {
+            ...toAdminManagedRow(encrypted, account.owner_id),
+            created_at_ms: account.created_at_ms,
+        }
+    }))
+
+    if (reEncryptedAccounts.length > 0) {
+        const { error } = await supabase
+            .from("encrypted_accounts")
+            .upsert(reEncryptedAccounts, { onConflict: "id" })
+        if (error) throw error
+    }
 
     const { error } = await supabase
-        .from("app_settings")
-        .upsert({ key: "vault_enabled", value: enabled })
-
+        .from("admin_settings")
+        .upsert({ key: sharedAccessKeyName, value: nextKey, updated_at: new Date().toISOString() })
     if (error) throw error
 }
 
-export async function addAdminManagedAccount(credentialString: string, passphrase: string): Promise<number> {
+export async function addAdminManagedAccount(credentialString: string): Promise<number> {
     if (!supabase) throw new Error("Supabase belum dikonfigurasi")
-    if (!adminAccountKey && !passphrase) throw new Error("VITE_ADMIN_ACCOUNT_KEY belum dikonfigurasi")
+    const accessKey = await loadAdminAccessKey()
+    if (!accessKey) throw new Error("Atur kunci akses bersama di halaman Pengaturan Admin terlebih dahulu")
 
     const session = await getAdminSession()
     if (!session?.user.id) throw new Error("Admin belum login")
 
     const parsed = parseCredentialString(credentialString)
-    const encrypted = await encryptAccount(parsed, adminAccountKey || passphrase)
+    const encrypted = await encryptAccount(parsed, accessKey)
 
     const { error } = await supabase
         .from("encrypted_accounts")

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useGraph } from "@/hooks/useGraph"
 import { useVaultStore } from "@/store/vaultStore"
-import type { MessageDetail } from "@/lib/graph"
+import { getFriendlyEmailError, type MessageDetail } from "@/lib/graph"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
@@ -30,7 +30,7 @@ export function MessageDetailPage() {
                 const msg = await getMessageDetail(id)
                 if (isMounted) setMessage(msg)
             } catch (err: any) {
-                if (isMounted) setError(err.message || "Failed to load message")
+                if (isMounted) setError(getFriendlyEmailError(err))
             } finally {
                 if (isMounted) setLoading(false)
             }

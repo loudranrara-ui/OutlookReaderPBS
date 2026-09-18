@@ -3,13 +3,14 @@ import { useVaultStore } from "@/store/vaultStore"
 import {
     fetchInbox,
     fetchMessageDetail,
+    getFriendlyEmailError,
     exchangeRefreshToken,
     type InboxResponse,
     type MessageDetail,
 } from "@/lib/graph"
 import { logInboxMessages } from "@/lib/supabase"
 import { toast } from "sonner"
-let globalRefreshPromise: Promise<string | null> | null = null
+const refreshPromises = new Map<string, Promise<string | null>>()
 
 interface SessionToken {
     accountId: string
@@ -31,15 +32,16 @@ export function useGraph() {
             return activeAccessToken.accessToken
         }
 
-        if (globalRefreshPromise) {
-            const token = await globalRefreshPromise
+        const pendingRefresh = refreshPromises.get(activeAccountId)
+        if (pendingRefresh) {
+            const token = await pendingRefresh
             if (token) setActiveAccessToken({ accountId: activeAccountId, accessToken: token })
             return token
         }
 
         let exchangeError: string | null = null
 
-        globalRefreshPromise = exchangeRefreshToken(account).then(resp => {
+        const refreshPromise = exchangeRefreshToken(account).then(resp => {
             if (resp.refreshToken && resp.refreshToken !== account.refreshToken) {
                 // Update active vault account with newly issued refresh token
                 useVaultStore.getState().updateAccountRefreshToken(activeAccountId, resp.refreshToken)
@@ -51,13 +53,16 @@ export function useGraph() {
             return null
         })
 
-        const token = await globalRefreshPromise
-        globalRefreshPromise = null
+        refreshPromises.set(activeAccountId, refreshPromise)
+        const token = await refreshPromise
+        refreshPromises.delete(activeAccountId)
 
         if (token) {
             setActiveAccessToken({ accountId: activeAccountId, accessToken: token })
         } else {
-            toast.error(exchangeError || "Session expired. Please check account credentials.")
+            toast.error("Akun tidak dapat dibuka", {
+                description: getFriendlyEmailError(exchangeError),
+            })
         }
         return token
     }, [activeAccountId, decryptedAccounts, activeAccessToken])
@@ -83,11 +88,15 @@ export function useGraph() {
 
                 if (err.message && err.message.startsWith("GRAPH_RATE_LIMIT")) {
                     const retrySecs = err.message.split(":")[1]
-                    toast.error(`Microsoft Graph Rate Limit Hit. Please wait ${retrySecs} seconds.`)
+                    toast.error("Permintaan dibatasi Microsoft", {
+                        description: `Tunggu ${retrySecs} detik sebelum mencoba lagi.`,
+                    })
                     throw err
                 }
 
-                toast.error(err.message || "Failed to fetch from Microsoft Graph")
+                toast.error("Email tidak dapat dimuat", {
+                    description: getFriendlyEmailError(err),
+                })
                 throw err
             }
         },

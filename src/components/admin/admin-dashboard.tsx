@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { decryptAccount } from "@/lib/crypto"
 import { exchangeRefreshToken, fetchMessageDetail, type MessageDetail } from "@/lib/graph"
-import type { InboxLogRow, SupabaseAccountRow } from "@/lib/supabase"
+import { loadAdminAccessKey, type InboxLogRow, type SupabaseAccountRow } from "@/lib/supabase"
 import { LayoutDashboard, LockKeyhole, Mail, RefreshCcw, Settings, ShieldCheck, Trash2, Users } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import DOMPurify from "dompurify"
@@ -24,18 +24,26 @@ export interface AdminDashboardProps {
     accounts: SupabaseAccountRow[]
     logs: InboxLogRow[]
     selectedAccountId: string
-    vaultEnabled: boolean
     newAccountCredential: string
     newAccountKey: string
     onRefresh: () => void
     onSignOut: () => void
-    onToggleVault: () => void
     onAddAccount: (event: React.FormEvent) => void
     onCredentialChange: (value: string) => void
     onKeyChange: (value: string) => void
     onFilterChange: (accountId: string) => void
     onClearFilter: () => void
     onDeleteAccount: (accountId: string) => void
+}
+
+interface SettingsPanelProps {
+    loading: boolean
+    hasAccessKey: boolean
+    currentAccessKey: string
+    nextAccessKey: string
+    onCurrentAccessKeyChange: (value: string) => void
+    onNextAccessKeyChange: (value: string) => void
+    onUpdateAccessKey: (event: React.FormEvent) => void
 }
 
 export function AdminMissingConfig() {
@@ -75,15 +83,15 @@ export function AdminLoginCard({ email, password, loading, onEmailChange, onPass
 }
 
 function adminNavClass({ isActive }: { isActive: boolean }) {
-    return `flex items-center gap-3 rounded-xl px-3 py-2 text-sm ${isActive ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`
+    return `flex items-center gap-3 rounded-xl border-2 px-3 py-2 text-sm font-bold ${isActive ? "border-[#720002] bg-[#720002] text-white shadow-[3px_3px_0_#DB8291]" : "border-transparent text-[#720002] hover:border-[#720002] hover:bg-[#FFF8F9]"}`
 }
 
 function AdminSidebar() {
     return (
-        <aside className="hidden w-72 shrink-0 border-r-3 border-foreground bg-[#F4D6DC] lg:flex lg:flex-col">
+        <aside className="hidden w-72 shrink-0 border-r-3 border-foreground bg-[#F4D6DC] text-[#720002] lg:flex lg:flex-col">
             <div className="border-b-3 border-foreground p-5">
-                <div className="neo-card flex items-center gap-3 rounded-sm bg-white p-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-sm border-3 border-foreground bg-[#720002] text-white shadow-[3px_3px_0_#190304]">
+                <div className="flex items-center gap-3 rounded-sm border-2 border-foreground bg-[#FFF8F9] p-3 shadow-[4px_4px_0_#720002]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-sm border-2 border-foreground bg-[#720002] text-white shadow-[3px_3px_0_#DB8291]">
                         <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div>
@@ -99,18 +107,18 @@ function AdminSidebar() {
                 <NavLink to="/admin/logs" className={adminNavClass}><Mail className="h-4 w-4" /> Log Email</NavLink>
                 <NavLink to="/admin/settings" className={adminNavClass}><Settings className="h-4 w-4" /> Pengaturan</NavLink>
             </nav>
-            <div className="border-t-3 border-foreground bg-[#DB8291] p-4 text-xs font-black text-[#190304]">Data akun tetap terenkripsi di Supabase.</div>
+            <div className="border-t-3 border-foreground bg-[#DB8291] p-4 text-xs font-black text-[#720002]">Data akun tetap terenkripsi di Supabase.</div>
         </aside>
     )
 }
 
 function AdminTopbar({ loading, onRefresh, onSignOut }: Pick<AdminDashboardProps, "loading" | "onRefresh" | "onSignOut">) {
     return (
-        <header className="sticky top-0 z-20 border-b-3 border-foreground bg-[#FFF8F9] px-4 py-3 md:px-6">
+        <header className="sticky top-0 z-20 border-b-3 border-foreground bg-[#FFF8F9] px-4 py-3 text-[#720002] md:px-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p className="text-xs font-black uppercase tracking-wider text-[#720002]">Admin Panel</p>
-                    <h1 className="text-xl font-black tracking-tight md:text-2xl">Kelola Akun & Log Email</h1>
+                    <h1 className="text-xl font-black tracking-tight text-[#720002] md:text-2xl">Akun Outlook & Log Email</h1>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={onRefresh} disabled={loading}>
@@ -139,7 +147,7 @@ export function AdminShell({ loading, onRefresh, onSignOut, children }: Pick<Adm
                 <div className="flex min-w-0 flex-1 flex-col">
                     <AdminTopbar loading={loading} onRefresh={onRefresh} onSignOut={onSignOut} />
                     <main className="flex-1 space-y-6 p-4 md:p-6">{children}</main>
-                    <footer className="border-t-3 border-foreground bg-[#720002] px-4 py-3 text-xs font-black text-white md:px-6">
+                    <footer className="border-t-3 border-foreground bg-[#720002] px-4 py-3 text-xs font-black text-[#F4D6DC] md:px-6">
                         Admin dashboard berjalan di Vercel dan terhubung ke Supabase Auth, Database, dan RLS.
                     </footer>
                 </div>
@@ -151,15 +159,15 @@ export function AdminShell({ loading, onRefresh, onSignOut, children }: Pick<Adm
 export function StatCards({ accounts, logs, selectedAccountId, onFilterChange }: Pick<AdminDashboardProps, "accounts" | "logs" | "selectedAccountId" | "onFilterChange">) {
     return (
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Card className="brand-panel-cream">
+            <Card className="brand-panel-berry">
                 <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4" /> Total Akun</CardTitle></CardHeader>
                 <CardContent className="text-3xl font-bold">{accounts.length}</CardContent>
             </Card>
-            <Card className="brand-panel-pink">
+            <Card className="brand-panel-berry">
                 <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Mail className="h-4 w-4" /> Log Ditampilkan</CardTitle></CardHeader>
                 <CardContent className="text-3xl font-bold">{logs.length}</CardContent>
             </Card>
-            <Card className="brand-panel-rose">
+            <Card className="brand-panel-berry">
                 <CardHeader className="pb-3"><CardTitle className="text-base">Filter Log</CardTitle></CardHeader>
                 <CardContent>
                     <select className="w-full rounded-lg border bg-background px-3 py-2 text-sm" value={selectedAccountId} onChange={(event) => onFilterChange(event.target.value)}>
@@ -172,26 +180,10 @@ export function StatCards({ accounts, logs, selectedAccountId, onFilterChange }:
     )
 }
 
-export function SettingsPanel({ vaultEnabled, loading, onToggleVault }: Pick<AdminDashboardProps, "vaultEnabled" | "loading" | "onToggleVault">) {
+export function SettingsPanel({ loading, hasAccessKey, currentAccessKey, nextAccessKey, onCurrentAccessKeyChange, onNextAccessKeyChange, onUpdateAccessKey }: SettingsPanelProps) {
     return (
         <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="brand-panel-cream">
-                <CardHeader>
-                    <CardTitle>Pengaturan Tampilan User</CardTitle>
-                    <CardDescription>Atur apakah pengguna boleh melihat menu Kelola Akun di halaman utama.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="rounded-xl border bg-muted/30 p-4">
-                        <p className="text-sm text-muted-foreground">Status menu Kelola Akun</p>
-                        <p className="mt-1 text-lg font-semibold">{vaultEnabled ? "Ditampilkan" : "Disembunyikan"}</p>
-                    </div>
-                    <Button variant="outline" onClick={onToggleVault} disabled={loading}>
-                        {vaultEnabled ? "Sembunyikan Vault dari User" : "Tampilkan Vault untuk User"}
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card className="brand-panel-pink">
+            <Card className="brand-panel-berry">
                 <CardHeader>
                     <CardTitle>Flow Aktif</CardTitle>
                     <CardDescription>Ringkasan cara aplikasi utama bekerja setelah refactor admin.</CardDescription>
@@ -203,23 +195,36 @@ export function SettingsPanel({ vaultEnabled, loading, onToggleVault }: Pick<Adm
                     <p>4. LocalStorage akun user tidak dipakai saat Supabase aktif.</p>
                 </CardContent>
             </Card>
+            <Card className="brand-panel-berry">
+                <CardHeader>
+                    <CardTitle>Kunci Akses Bersama</CardTitle>
+                    <CardDescription>Satu kunci dipakai untuk semua akun Outlook. Saat diganti, semua akun akan dienkripsi ulang otomatis.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={onUpdateAccessKey} className="grid gap-3 md:grid-cols-3">
+                        {hasAccessKey && <Input type="password" placeholder="Kunci akses saat ini" value={currentAccessKey} onChange={(event) => onCurrentAccessKeyChange(event.target.value)} />}
+                        <Input type="password" placeholder={hasAccessKey ? "Kunci akses baru" : "Buat kunci akses bersama"} value={nextAccessKey} onChange={(event) => onNextAccessKeyChange(event.target.value)} />
+                        <Button type="submit" disabled={loading || !nextAccessKey || (hasAccessKey && !currentAccessKey)}>{hasAccessKey ? "Ganti Kunci" : "Simpan Kunci"}</Button>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
     )
 }
 
-export function AddAccountPanel({ loading, newAccountCredential, onAddAccount, onCredentialChange }: Pick<AdminDashboardProps, "loading" | "newAccountCredential" | "newAccountKey" | "onAddAccount" | "onCredentialChange" | "onKeyChange">) {
+export function AddAccountPanel({ loading, newAccountCredential, onAddAccount, onCredentialChange }: Pick<AdminDashboardProps, "loading" | "newAccountCredential" | "onAddAccount" | "onCredentialChange">) {
     return (
-        <Card id="add-account" className="brand-panel-cream">
+        <Card id="add-account" className="brand-panel-berry">
             <CardHeader>
                 <CardTitle>Tambah Akun Outlook</CardTitle>
-                <CardDescription>Akun ditambahkan oleh admin dan terenkripsi memakai kunci admin dari environment.</CardDescription>
+                <CardDescription>Akun akan dienkripsi menggunakan kunci akses bersama dari halaman Pengaturan.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={onAddAccount} className="grid gap-3 md:grid-cols-[1fr_auto]">
                     <Input placeholder="email:password:refresh_token:client_id atau pakai pemisah |" value={newAccountCredential} onChange={(event) => onCredentialChange(event.target.value)} />
                     <Button type="submit" disabled={loading || !newAccountCredential}>Tambah</Button>
                 </form>
-                <p className="mt-3 text-xs text-muted-foreground">Akun dienkripsi memakai VITE_ADMIN_ACCOUNT_KEY dari environment Vercel.</p>
+                <p className="mt-3 text-xs text-muted-foreground">Atur kunci akses bersama terlebih dahulu sebelum menambahkan akun.</p>
             </CardContent>
         </Card>
     )
@@ -227,7 +232,7 @@ export function AddAccountPanel({ loading, newAccountCredential, onAddAccount, o
 
 export function AccountListPanel({ accounts, selectedAccountId, onFilterChange, onClearFilter, onDeleteAccount }: Pick<AdminDashboardProps, "accounts" | "selectedAccountId" | "onFilterChange" | "onClearFilter" | "onDeleteAccount">) {
     return (
-        <Card id="accounts" className="brand-panel-cream overflow-hidden">
+        <Card id="accounts" className="brand-panel-berry overflow-hidden">
             <CardHeader>
                 <div className="flex items-center justify-between gap-3">
                     <div>
@@ -284,7 +289,7 @@ export function LatestLogsPreview({ logs }: Pick<AdminDashboardProps, "logs">) {
     const latestLogs = logs.slice(0, 10)
 
     return (
-        <Card className="brand-panel-pink">
+        <Card className="brand-panel-berry">
             <CardHeader>
                 <CardTitle>10 Email Terbaru</CardTitle>
                 <CardDescription>Ringkasan email terbaru yang tercatat dari semua akun atau akun yang sedang difilter.</CardDescription>
@@ -319,9 +324,9 @@ export function InboxLogTable({ logs, accounts, selectedAccountId, onFilterChang
     const [viewerOpen, setViewerOpen] = useState(false)
 
     const openMessageForLog = async (log: InboxLogRow) => {
-        const adminAccountKey = import.meta.env.VITE_ADMIN_ACCOUNT_KEY || ""
+        const adminAccountKey = await loadAdminAccessKey()
         if (!adminAccountKey) {
-            setViewerError("VITE_ADMIN_ACCOUNT_KEY belum dikonfigurasi")
+            setViewerError("Kunci akses bersama belum diatur di Pengaturan Admin")
             return
         }
 
@@ -360,7 +365,7 @@ export function InboxLogTable({ logs, accounts, selectedAccountId, onFilterChang
 
     return (
         <>
-            <Card id="logs" className="brand-panel-cream overflow-hidden">
+            <Card id="logs" className="brand-panel-berry overflow-hidden">
                 <CardHeader>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
@@ -444,7 +449,7 @@ export function AdminDashboard(props: AdminDashboardProps) {
                     <AdminTopbar loading={props.loading} onRefresh={props.onRefresh} onSignOut={props.onSignOut} />
                     <main className="flex-1 space-y-6 p-4 md:p-6">
                         <StatCards accounts={props.accounts} logs={props.logs} selectedAccountId={props.selectedAccountId} onFilterChange={props.onFilterChange} />
-                        <AddAccountPanel loading={props.loading} newAccountCredential={props.newAccountCredential} newAccountKey={props.newAccountKey} onAddAccount={props.onAddAccount} onCredentialChange={props.onCredentialChange} onKeyChange={props.onKeyChange} />
+                        <AddAccountPanel loading={props.loading} newAccountCredential={props.newAccountCredential} onAddAccount={props.onAddAccount} onCredentialChange={props.onCredentialChange} />
                         <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
                             <AccountListPanel accounts={props.accounts} selectedAccountId={props.selectedAccountId} onFilterChange={props.onFilterChange} onClearFilter={props.onClearFilter} onDeleteAccount={props.onDeleteAccount} />
                             <InboxLogTable logs={props.logs} accounts={props.accounts} selectedAccountId={props.selectedAccountId} onFilterChange={props.onFilterChange} onClearFilter={props.onClearFilter} />
