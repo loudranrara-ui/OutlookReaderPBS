@@ -4,6 +4,7 @@ export interface TokenResponse {
     accessToken: string
     expiresIn: number
     refreshToken?: string
+    mode?: "oauth2" | "graph"
 }
 
 export interface InboxMessage {
@@ -83,11 +84,12 @@ const LIVE_TOKEN_URL = USE_DIRECT_OAUTH ? "https://login.live.com/oauth20_token.
  * Exchanges the refresh token for a new access token using the Live SDK OAuth2 endpoint.
  * Matches Python requests.post('https://login.live.com/oauth20_token.srf', data={client_id, grant_type, refresh_token}).
  */
-export async function exchangeRefreshToken(account: ParsedCredential): Promise<TokenResponse> {
+async function exchangeRefreshTokenWithScope(account: ParsedCredential, scope: string, mode: "oauth2" | "graph"): Promise<TokenResponse> {
     const body = new URLSearchParams()
     body.append("client_id", account.clientId)
     body.append("grant_type", "refresh_token")
     body.append("refresh_token", account.refreshToken)
+    body.append("scope", scope)
 
     const res = await fetch(LIVE_TOKEN_URL, {
         method: "POST",
@@ -102,14 +104,38 @@ export async function exchangeRefreshToken(account: ParsedCredential): Promise<T
     if (!res.ok) {
         const errorDesc = data.error_description || data.error || res.statusText || "Token exchange failed"
         console.error("[OAuth Exchange Error]:", data)
-        throw new Error(errorDesc)
+        throw new Error(`${mode.toUpperCase()}_TOKEN_EXCHANGE_FAILED: ${errorDesc}`)
     }
 
     return {
         accessToken: data.access_token,
         expiresIn: data.expires_in,
         refreshToken: data.refresh_token || account.refreshToken,
+        mode,
     }
+}
+
+/**
+ * Some Outlook refresh tokens were issued with a delegated scope while others
+ * were issued for an app's .default permissions. Try both Microsoft-supported
+ * Graph scopes so either kind can be used by the reader.
+ */
+export async function exchangeRefreshToken(account: ParsedCredential): Promise<TokenResponse> {
+    const attempts: Array<[string, "oauth2" | "graph"]> = [
+        ["https://graph.microsoft.com/Mail.Read offline_access", "oauth2"],
+        ["https://graph.microsoft.com/.default", "graph"],
+    ]
+    let lastError: unknown
+
+    for (const [scope, mode] of attempts) {
+        try {
+            return await exchangeRefreshTokenWithScope(account, scope, mode)
+        } catch (error) {
+            lastError = error
+        }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error("Token exchange failed")
 }
 
 async function graphRequest<T>(path: string, accessToken: string): Promise<T> {
