@@ -137,13 +137,24 @@ function formatAddress(recipient?: GraphEmailAddress): string {
 }
 
 export async function fetchInbox(accessToken: string): Promise<InboxResponse> {
-    const data = await graphRequest<{ value: GraphMessage[] }>(
-        "/me/mailFolders/inbox/messages?$select=id,subject,from,bodyPreview,receivedDateTime,isRead&$orderby=receivedDateTime%20desc&$top=100",
-        accessToken,
-    )
+    const query = "messages?$select=id,subject,from,bodyPreview,receivedDateTime,isRead&$orderby=receivedDateTime%20desc&$top=100"
+    const [inboxData, junkData] = await Promise.all([
+        graphRequest<{ value: GraphMessage[] }>(`/me/mailFolders/inbox/${query}`, accessToken),
+        graphRequest<{ value: GraphMessage[] }>(`/me/mailFolders/junkemail/${query}`, accessToken),
+    ])
+
+    // A message should only appear once, even if Microsoft moves it while loading.
+    const messages = [...inboxData.value, ...junkData.value]
+        .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
+        .sort((a, b) => {
+            const aTime = a.receivedDateTime ? new Date(a.receivedDateTime).getTime() : 0
+            const bTime = b.receivedDateTime ? new Date(b.receivedDateTime).getTime() : 0
+            return bTime - aTime
+        })
+        .slice(0, 100)
 
     return {
-        messages: data.value.map((message) => ({
+        messages: messages.map((message) => ({
             id: message.id,
             subject: message.subject || "(No Subject)",
             from: formatAddress(message.from),
